@@ -1,12 +1,11 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 1.0
+ * Version 1.1
  */
 
 (function() {
 
-  // Constructor:
   this.Haystack = function() {
     this.caseSensitive = null;    // Does capitalization matter?
     this.flexibility = null;      // How strict search matches are
@@ -45,7 +44,9 @@
     var results = [];
 
     if( !caseSensitive ){
-      query = query.toLowerCase();
+      query = query.trim().toLowerCase();
+    } else {
+      query = query.trim();
     }
 
     if( exclusions != null){
@@ -58,8 +59,8 @@
       results = query;
     }
 
-    // If no results, tokenize and check for a match for each word:
-    else if( source.indexOf(query) == -1 && flexibility > 0 ){
+    // If no results, tokenize and check for a similar match for each word:
+    else if( flexibility > 0 ){
       var tokens = this.tokenize(query);
       for (let i = 0; i < tokens.length; i++) {
         results.push( this.getSuggestions(tokens[i], source, 1, flexibility) );
@@ -83,16 +84,20 @@
       Threshold is also an optional parameter for use by search()
      ------------------------------------------------------- */
     var suggestionSet = [];
+    query = query.trim().toLowerCase();
 
-    var suggestion = filter(function(word) {
-      var levDist = levenshtein(query, word);
-      if ( levDist >= 0 && levDist <= threshold ) {
-        return word;
-      }
-    }, source);
+    var suggestions = filter(
+      function(word) {
+        var levDist = levenshtein(query, word);
+        if ( levDist >= 0 && levDist <= threshold ) {
+          return word;
+        }
+      }, source);
+
+    sortResults(suggestions, query);
 
     for(let i=0; i<limit; i++){
-      suggestionSet.push( suggestion[i] );
+      suggestionSet.push( suggestions[i] );
     }
 
     return suggestionSet;
@@ -110,6 +115,7 @@
 
 
 
+
   /********** Private methods: **********/
 
   // Extends defaults with user options
@@ -122,6 +128,8 @@
     }
     return source;
   }
+
+
 
   /* Returns numeric Levenshtein distance between two strings */
   function levenshtein(word1, word2) {
@@ -170,19 +178,40 @@
     return cost[n][m];
   };
 
+
+
   /* Returns an array of suggested words */
-  function filter(fn, list, bind) {
+  function filter(fn, source, bind) {
     var resultSet = [];
-    for (var word, i = 0, l = list.length >>> 0; i < l; i++) {
-      if (i in list) {
-        word = list[i];
-        if (fn.call(bind, word, i, list)) {
+    for (let i = 0, word; i < source.length; i++) {
+      if (i in source) {
+        word = source[i];
+        if (fn.call(bind, word, i, source)) {
           resultSet.push(word);
         }
       }
     }
     return resultSet;
   };
+
+
+
+  /* Sorts results in ascending order using bubble sort */
+  function sortResults(results, query) {
+    var swapped;
+    do {
+      swapped = false;
+      for(var i = 0; i < results.length; i++) {
+        if(results[i] && results[i+1] && levenshtein(query,results[i]) > levenshtein(query,results[i+1]) ) {
+          let temp = results[i];
+          results[i] = results[i+1];
+          results[i+1] = temp;
+          swapped = true;
+        }
+      }
+    } while(swapped);
+    return results;
+  }
 
 
 }());
