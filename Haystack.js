@@ -1,22 +1,21 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 1.1
+ * Version 1.2
+ *
  */
 
 (function() {
 
   this.Haystack = function() {
     this.caseSensitive = null;    // Does capitalization matter?
-    this.flexibility = null;      // How strict search matches are
-    this.levDistance = null;      // How similar suggestions are to original query
+    this.flexibility = null;      // How strict searche matches and suggestions are
     this.exclusions = null;       // Which characters are omitted from search queries
 
     // Default options:
     var defaults = {
       caseSensitive: false,
-      flexibility: 0,
-      levDistance: 2,
+      flexibility: 1,
       exclusions: null
     }
 
@@ -26,6 +25,7 @@
     } else {
       this.options = defaults;
     }
+
   }
 
 
@@ -33,74 +33,103 @@
 
   /********** Public methods: **********/
 
-  Haystack.prototype.search = function( query, source ) {
+  Haystack.prototype.search = function( query, source, limit=1 ) {
     /* -------------------------------------------------------
       Returns an array of matches, or null if no matches are found
       The accuracy of these results is determined by the value set for 'flexibility'
+      The maximum results returned is determined by the optional 'limit' parameter
      ------------------------------------------------------- */
     var caseSensitive = this.options.caseSensitive;
     var flexibility = this.options.flexibility;
     var exclusions = this.options.exclusions;
     var results = [];
 
-    if( !caseSensitive ){
-      query = query.trim().toLowerCase();
-    } else {
-      query = query.trim();
-    }
+    if(query != "") {
 
-    if( exclusions != null){
-      query = query.replace(exclusions, "");
-    }
+      if( !caseSensitive ){
+        query = query.trim().toLowerCase();
+        source = source.map(function(e){ return e.toLowerCase(); });
+      } else {
+        query = query.trim();
+      }
+
+      if( exclusions ){
+        query = query.replace(exclusions, "");
+      }
 
 
-    // First check for exact match of entire query:
-    if( source.indexOf(query) != -1 ){
-      results = query;
-    }
+      // First check for exact match of entire query:
+      if( source.indexOf(query) != -1 ){
+        results.push(query);
+      }
 
-    // If no results, tokenize and check for a similar match for each word:
-    else if( flexibility > 0 ){
-      var tokens = this.tokenize(query);
-      for (let i = 0; i < tokens.length; i++) {
-        results.push( this.getSuggestions(tokens[i], source, 1, flexibility) );
+      // If flexibility is set, run a more comprehensive search:
+      if( flexibility > 0 ){
+        var tokens = this.tokenize(query);
+
+        // Are all tokens found, just in a scrambled order?
+        for(let i=0; i<source.length; i++){
+          let allFound = true;
+          for(let j=0; j<tokens.length; j++){
+            if(source[i].indexOf(tokens[j]) == -1 ){
+              allFound = false;
+            }
+          }
+          if( allFound ){ results.push(source[i]); }
+        }
+
+        // Find similar phrases within this flexibility range:
+        let similarWords = getSimilarWords(query, source, null, flexibility);
+        if( similarWords != null ){
+          for(let i=0; i<similarWords.length; i++){
+            results.push( similarWords[i] );
+          }
+        }
+
+      }
+
+      // Sort and return our results array, or return null:
+      if( results == "" ){
+        return null;
+      } else {
+        // Remove duplicates and return array:
+        let uniqueResults = createUniqueArray(results);
+        return sortResults(uniqueResults, query).slice(0, limit);
       }
     }
-
-    // Still no matches, return null:
     else {
-      results = null;
+      // No query present
+      return null;
     }
 
-    return results;
   }
 
 
 
-  Haystack.prototype.getSuggestions = function( query, source, limit, threshold=this.options.levDistance ) {
+  Haystack.prototype.getSuggestions = function( query, source, limit=1 ) {
     /* -------------------------------------------------------
-      Returns an array of similar words
-      The accuracy of these suggestions is determined by the threshold set for 'levDistance'
-      Threshold is also an optional parameter for use by search()
+      Returns an array of suggested matches
+      The accuracy of these suggestions is determined by the threshold set for 'flexibility'
+      The maximum suggestions returned is determined by the optional 'limit' parameter
      ------------------------------------------------------- */
-    var suggestionSet = [];
-    query = query.trim().toLowerCase();
+    var threshold = this.options.flexibility;
+    var caseSensitive = this.options.caseSensitive;
 
-    var suggestions = filter(
-      function(word) {
-        var levDist = levenshtein(query, word);
-        if ( levDist >= 0 && levDist <= threshold ) {
-          return word;
-        }
-      }, source);
-
-    sortResults(suggestions, query);
-
-    for(let i=0; i<limit; i++){
-      suggestionSet.push( suggestions[i] );
+    if( !caseSensitive ){
+      query = query.trim().toLowerCase();
+      source = source.map(function(e){ return e.toLowerCase(); });
+    } else {
+      query = query.trim();
     }
 
-    return suggestionSet;
+    var suggestions = getSimilarWords(query, source, limit, threshold);
+
+    if( suggestions != ""){
+      return suggestions;
+    }
+    else {
+      return null;
+    }
   }
 
 
@@ -196,6 +225,35 @@
 
 
 
+  /* Returns an array of similar words, with a specified limit */
+  function getSimilarWords(input, source, limit, threshold=2){
+    var resultSet = [];
+
+    // Input is within threshold of some source value:
+    var matches = filter(
+      function(sourceWord) {
+        var levDist = levenshtein(input, sourceWord);
+        if ( levDist >= 0 && levDist <= threshold ) {
+          return sourceWord;
+        }
+      }, source);
+
+    var matches = sortResults(matches, input);
+
+    if( limit ){
+      for(let i=0; i<limit; i++){
+        resultSet.push( matches[i] );
+      }
+    }
+    else {
+      return matches;
+    }
+
+    return resultSet;
+  }
+
+
+
   /* Sorts results in ascending order using bubble sort */
   function sortResults(results, query) {
     var swapped;
@@ -211,6 +269,16 @@
       }
     } while(swapped);
     return results;
+  }
+
+
+
+  /* Removes duplicates from an array */
+  function createUniqueArray(arr) {
+    uniqueArray = arr.filter(function(item, pos) {
+      return arr.indexOf(item) == pos;
+    });
+    return uniqueArray;
   }
 
 
