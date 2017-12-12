@@ -7,18 +7,17 @@ Just provide the input form and the source data to search (as an array)
 
 `var haystack = new Haystack({
   caseSensitive: false,
-  flexibility: 0,
-  levDistance: 2,
+  flexibility: 2,
   exclusions: /[0-9]+/g
 });`
 
 ## Methods:
 
-`haystack.search(searchTerm, source);`
+`haystack.search(*searchTerm*, *source*, *[limit]*);`
 
-`haystack.getSuggestions(searchTerm, source, 1);`
+`haystack.getSuggestions(*searchTerm*, *source*, *[limit]*);`
 
-`haystack.tokenize(searchTerm);`
+`haystack.tokenize(*searchTerm*, *[delimiter]*);`
 
 ## Features coming soon:
 
