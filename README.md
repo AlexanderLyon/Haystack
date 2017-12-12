@@ -13,11 +13,11 @@ Just provide the input form and the source data to search (as an array)
 
 ## Methods:
 
-`haystack.search(*searchTerm*, *source*, *[limit]*);`
+`haystack.search(searchTerm, source, [limit]);`
 
-`haystack.getSuggestions(*searchTerm*, *source*, *[limit]*);`
+`haystack.getSuggestions(searchTerm, source, [limit]);`
 
-`haystack.tokenize(*searchTerm*, *[delimiter]*);`
+`haystack.tokenize(searchTerm, [delimiter]);`
 
 ## Features coming soon:
 
