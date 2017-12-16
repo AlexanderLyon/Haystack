@@ -8,6 +8,7 @@ Just provide the input form and the source data to search (as an array)
 `var haystack = new Haystack({
   caseSensitive: false,
   flexibility: 2,
+  stemming: true,
   exclusions: /[0-9]+/g
 });`
 
@@ -22,4 +23,4 @@ Just provide the input form and the source data to search (as an array)
 ## Features coming soon:
 
 - Smarter searching (stemming, fuzzy searching, etc.)
-- Ability to search object properties
+- Recursive object property searching

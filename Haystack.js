@@ -1,21 +1,23 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 1.2
- *
+ * Version 1.3
+ * https://github.com/alyon011/Haystack
  */
 
 (function() {
 
   this.Haystack = function() {
     this.caseSensitive = null;    // Does capitalization matter?
-    this.flexibility = null;      // How strict searche matches and suggestions are
+    this.flexibility = null;      // How strict or loose search matches and suggestions are
+    this.stemming = null;         // Reduces words to a more basic form
     this.exclusions = null;       // Which characters are omitted from search queries
 
     // Default options:
     var defaults = {
       caseSensitive: false,
-      flexibility: 1,
+      flexibility: 2,
+      stemming: false,
       exclusions: null
     }
 
@@ -41,49 +43,100 @@
      ------------------------------------------------------- */
     var caseSensitive = this.options.caseSensitive;
     var flexibility = this.options.flexibility;
+    var stemming = this.options.stemming;
     var exclusions = this.options.exclusions;
     var results = [];
 
     if(query != "") {
-
-      if( !caseSensitive ){
-        query = query.trim().toLowerCase();
-        source = source.map(function(e){ return e.toLowerCase(); });
-      } else {
-        query = query.trim();
-      }
+      var tokens = this.tokenize(query);
 
       if( exclusions ){
         query = query.replace(exclusions, "");
       }
 
-
-      // First check for exact match of entire query:
-      if( source.indexOf(query) != -1 ){
-        results.push(query);
+      if ( stemming ){
+        /* NOTE this is a work in progress, right now it's only removing 's' from
+           the end of words, then rebuilding the query. This will be updated in
+           future versions */
+        query = "";
+        for(let i=0; i< tokens.length; i++) {
+          let lastChar = tokens[i].substr(tokens[i].length - 1);
+          if ( lastChar === 's'){ tokens[i] = tokens[i].slice(0, -1); }
+          query = query.concat(tokens[i] + " ");
+        }
       }
 
-      // If flexibility is set, run a more comprehensive search:
-      if( flexibility > 0 ){
-        var tokens = this.tokenize(query);
 
-        // Are all tokens found, just in a scrambled order?
-        for(let i=0; i<source.length; i++){
-          let allFound = true;
-          for(let j=0; j<tokens.length; j++){
-            if(source[i].indexOf(tokens[j]) == -1 ){
-              allFound = false;
-            }
-          }
-          if( allFound ){ results.push(source[i]); }
+      if( getDataType(source) === 'array' ) {
+
+        if( caseSensitive ){
+          query = query.trim();
+        } else {
+          query = query.trim().toLowerCase();
+          source = source.map(function(e){ return e.toLowerCase(); });
         }
 
-        // Find similar phrases within this flexibility range:
-        let similarWords = getSimilarWords(query, source, null, flexibility);
-        if( similarWords != null ){
-          for(let i=0; i<similarWords.length; i++){
-            results.push( similarWords[i] );
+        // First check for exact match of entire query:
+        if( source.indexOf(query) != -1 ){
+          results.push(query);
+        }
+
+        // If flexibility is set, run a more comprehensive search:
+        if( flexibility > 0 ){
+
+          // Are all tokens found, just in a scrambled order?
+          for(let i=0; i<source.length; i++){
+            let allFound = true;
+            for(let j=0; j<tokens.length; j++){
+              if(source[i].indexOf(tokens[j]) == -1 ){
+                allFound = false;
+              }
+            }
+            if( allFound ){ results.push(source[i]); }
           }
+
+          // Find similar phrases within this flexibility range:
+          let similarWords = getSimilarWords(query, source, null, flexibility);
+          if( similarWords != null ){
+            for(let i=0; i<similarWords.length; i++){
+              results.push( similarWords[i] );
+            }
+          }
+
+        }
+
+      }
+      else if( getDataType(source) === 'object' ) {
+
+        if( caseSensitive ){
+          query = query.trim();
+        } else {
+          query = query.trim().toLowerCase();
+        }
+
+        for( var key in source ){
+          var value = source[key];
+
+          if( !caseSensitive && value.toLowerCase().indexOf(query) != -1 ){
+            results.push(value);
+          }
+          else if( value.indexOf(query) != -1 ){
+            results.push(value);
+          }
+
+          if( flexibility > 0 ){
+            // Any close matches?
+            if( levenshtein(query, value.toLowerCase()) <= flexibility ){
+              results.push(value);
+            }
+            // Do any individual tokens match this value?
+            for(let i=0; i<tokens.length; i++){
+              if( value.toLowerCase().indexOf(tokens[i]) != -1 ){
+                results.push(value);
+              }
+            }
+          }
+
         }
 
       }
@@ -92,7 +145,6 @@
       if( results == "" ){
         return null;
       } else {
-        // Remove duplicates and return array:
         let uniqueResults = createUniqueArray(results);
         return sortResults(uniqueResults, query).slice(0, limit);
       }
@@ -279,6 +331,18 @@
       return arr.indexOf(item) == pos;
     });
     return uniqueArray;
+  }
+
+
+  /* Since arrays are technically objects, this helps to differentiate */
+  function getDataType(source){
+    if( source && typeof source === 'object' && source.constructor === Array ){
+      return "array";
+    } else if( source && typeof source === 'object' && source.constructor === Object ){
+      return "object";
+    } else{
+      return null;
+    }
   }
 
 
