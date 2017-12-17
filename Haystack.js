@@ -228,7 +228,7 @@
 
   /********** Private methods: **********/
 
-  // Extends defaults with user options
+  /* Extends defaults with user options */
   function extendDefaults(source, properties) {
     var property;
     for (property in properties) {
