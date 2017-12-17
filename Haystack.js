@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 1.3
+ * Version 1.4
  * https://github.com/alyon011/Haystack
  */
 
@@ -46,9 +46,24 @@
     var stemming = this.options.stemming;
     var exclusions = this.options.exclusions;
     var results = [];
+    var tokens;
 
     if(query != "") {
-      var tokens = this.tokenize(query);
+
+      if( caseSensitive ){
+        query = query.trim();
+        tokens = this.tokenize(query);
+      }
+      else if( getDataType(source) === 'array' ){
+        query = query.trim().toLowerCase();
+        tokens = this.tokenize(query);
+        source = source.map(function(e){ return e.toLowerCase(); });
+      }
+      else if( getDataType(source) === 'object' ){
+        query = query.trim().toLowerCase();
+        tokens = this.tokenize(query);
+        for(key in source){ source[key] = source[key].toLowerCase(); }
+      }
 
       if( exclusions ){
         query = query.replace(exclusions, "");
@@ -57,7 +72,7 @@
       if ( stemming ){
         /* NOTE this is a work in progress, right now it's only removing 's' from
            the end of words, then rebuilding the query. This will be updated in
-           future versions */
+           future versions. It's still buggy, so I do not suggest using it yet */
         query = "";
         for(let i=0; i< tokens.length; i++) {
           let lastChar = tokens[i].substr(tokens[i].length - 1);
@@ -69,16 +84,11 @@
 
       if( getDataType(source) === 'array' ) {
 
-        if( caseSensitive ){
-          query = query.trim();
-        } else {
-          query = query.trim().toLowerCase();
-          source = source.map(function(e){ return e.toLowerCase(); });
-        }
-
         // First check for exact match of entire query:
-        if( source.indexOf(query) != -1 ){
-          results.push(query);
+        for(let i=0; i<source.length; i++){
+          if( source[i] == query ){
+            results.push(source[i]);
+          }
         }
 
         // If flexibility is set, run a more comprehensive search:
@@ -104,41 +114,36 @@
           }
 
         }
-
       }
       else if( getDataType(source) === 'object' ) {
-
-        if( caseSensitive ){
-          query = query.trim();
-        } else {
-          query = query.trim().toLowerCase();
-        }
-
         for( var key in source ){
           var value = source[key];
 
-          if( !caseSensitive && value.toLowerCase().indexOf(query) != -1 ){
-            results.push(value);
-          }
-          else if( value.indexOf(query) != -1 ){
+          // First check for exact match of entire query:
+          if( value === query ){
             results.push(value);
           }
 
+          // If flexibility is set, run a more comprehensive search:
           if( flexibility > 0 ){
-            // Any close matches?
-            if( levenshtein(query, value.toLowerCase()) <= flexibility ){
-              results.push(value);
-            }
-            // Do any individual tokens match this value?
+
+            // Are all tokens found, just in a scrambled order?
+            let allFound = true;
             for(let i=0; i<tokens.length; i++){
-              if( value.toLowerCase().indexOf(tokens[i]) != -1 ){
-                results.push(value);
+              if(value.indexOf(tokens[i]) == -1 ){
+                allFound = false;
               }
             }
+            if( allFound ){ results.push(value); }
+
+
+            // Is this value close enough to the query?
+            if( levenshtein(query.toLowerCase(), value.toLowerCase()) <= flexibility ){
+              results.push(value);
+            }
+
           }
-
         }
-
       }
 
       // Sort and return our results array, or return null:
@@ -166,18 +171,42 @@
      ------------------------------------------------------- */
     var threshold = this.options.flexibility;
     var caseSensitive = this.options.caseSensitive;
+    var tokens = this.tokenize(query, " ");
+    var suggestions;
 
-    if( !caseSensitive ){
-      query = query.trim().toLowerCase();
-      source = source.map(function(e){ return e.toLowerCase(); });
-    } else {
+    if( caseSensitive ){
       query = query.trim();
+      tokens = this.tokenize(query);
+    }
+    else if( getDataType(source) === 'array' ){
+      query = query.trim().toLowerCase();
+      tokens = this.tokenize(query);
+      source = source.map(function(e){ return e.toLowerCase(); });
+    }
+    else if( getDataType(source) === 'object' ){
+      query = query.trim().toLowerCase();
+      tokens = this.tokenize(query);
     }
 
-    var suggestions = getSimilarWords(query, source, limit, threshold);
+    if( getDataType(source) === 'array' ) {
+      suggestions = getSimilarWords(query, source, null, threshold);
+    }
 
-    if( suggestions != ""){
-      return suggestions;
+    else if ( getDataType(source) === 'object' ) {
+      //store object values in an array:
+      var values = [];
+      for(var key in source){
+        values.push(source[key]);
+      }
+      if( !caseSensitive ){
+        values = values.map(function(e){ return e.toLowerCase(); });
+      }
+
+      suggestions = getSimilarWords(query, values, null, threshold);
+    }
+
+    if( suggestions != "" && typeof suggestions != "undefined"){
+      return sortResults( createUniqueArray(suggestions), query ).slice(0, limit);
     }
     else {
       return null;
