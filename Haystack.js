@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 1.4
+ * Version 2.0
  * https://github.com/alyon011/Haystack
  */
 
@@ -12,13 +12,15 @@
     this.flexibility = null;      // How strict or loose search matches and suggestions are
     this.stemming = null;         // Reduces words to a more basic form
     this.exclusions = null;       // Which characters are omitted from search queries
+    this.ignoreStopWords = null;  // Ignore words unimportant to query
 
     // Default options:
     var defaults = {
       caseSensitive: false,
       flexibility: 2,
       stemming: false,
-      exclusions: null
+      exclusions: null,
+      ignoreStopWords: false
     }
 
     // Override defaults with passed in options:
@@ -45,10 +47,21 @@
     var flexibility = this.options.flexibility;
     var stemming = this.options.stemming;
     var exclusions = this.options.exclusions;
+    var ignoreStopWords = this.options.ignoreStopWords;
     var results = [];
     var tokens;
 
     if(query != "") {
+
+      /* Prepare query */
+
+      if( ignoreStopWords ){
+        query = removeStopWords(query);
+      }
+
+      if( exclusions ){
+        query = query.replace(exclusions, "");
+      }
 
       if( caseSensitive ){
         query = query.trim();
@@ -65,26 +78,26 @@
         for(key in source){ source[key] = source[key].toLowerCase(); }
       }
 
-      if( exclusions ){
-        query = query.replace(exclusions, "");
-      }
-
       if ( stemming ){
-        /* NOTE this is a work in progress, right now it's only removing 's' from
-           the end of words, then rebuilding the query. This will be updated in
-           future versions. It's still buggy, so I do not suggest using it yet */
+        // Removes 's' from the end of words, then rebuilds the query
         query = "";
         for(let i=0; i< tokens.length; i++) {
           let lastChar = tokens[i].substr(tokens[i].length - 1);
           if ( lastChar === 's'){ tokens[i] = tokens[i].slice(0, -1); }
-          query = query.concat(tokens[i] + " ");
+          if(i < tokens.length - 1){
+            query = query.concat(tokens[i] + " ");
+          } else {
+            query = query.concat(tokens[i]);
+          }
         }
       }
 
+      /* Search */
+      //console.log('Searching for "' + query + '"');
 
       if( getDataType(source) === 'array' ) {
 
-        // First check for exact match of entire query:
+        // Basic search:
         for(let i=0; i<source.length; i++){
           if( source[i] == query ){
             results.push(source[i]);
@@ -94,7 +107,7 @@
         // If flexibility is set, run a more comprehensive search:
         if( flexibility > 0 ){
 
-          // Are all tokens found, just in a scrambled order?
+          // Is each token found, just in a scrambled order?
           for(let i=0; i<source.length; i++){
             let allFound = true;
             for(let j=0; j<tokens.length; j++){
@@ -115,11 +128,12 @@
 
         }
       }
+
       else if( getDataType(source) === 'object' ) {
-        for( var key in source ){
+        for( let key in source ) {
           var value = source[key];
 
-          // First check for exact match of entire query:
+          // Basic search:
           if( value === query ){
             results.push(value);
           }
@@ -127,7 +141,7 @@
           // If flexibility is set, run a more comprehensive search:
           if( flexibility > 0 ){
 
-            // Are all tokens found, just in a scrambled order?
+            // Is each token found, just in a scrambled order?
             let allFound = true;
             for(let i=0; i<tokens.length; i++){
               if(value.indexOf(tokens[i]) == -1 ){
@@ -136,23 +150,22 @@
             }
             if( allFound ){ results.push(value); }
 
-
             // Is this value close enough to the query?
             if( levenshtein(query.toLowerCase(), value.toLowerCase()) <= flexibility ){
               results.push(value);
             }
-
           }
+
         }
       }
 
-      // Sort and return our results array, or return null:
+      // Sort and return either the results array, or null:
       if( results == "" ){
         return null;
       } else {
-        let uniqueResults = createUniqueArray(results);
-        return sortResults(uniqueResults, query).slice(0, limit);
+        return sortResults( createUniqueArray(results), query ).slice(0, limit);
       }
+
     }
     else {
       // No query present
@@ -162,56 +175,6 @@
   }
 
 
-
-  Haystack.prototype.getSuggestions = function( query, source, limit=1 ) {
-    /* -------------------------------------------------------
-      Returns an array of suggested matches
-      The accuracy of these suggestions is determined by the threshold set for 'flexibility'
-      The maximum suggestions returned is determined by the optional 'limit' parameter
-     ------------------------------------------------------- */
-    var threshold = this.options.flexibility;
-    var caseSensitive = this.options.caseSensitive;
-    var tokens = this.tokenize(query, " ");
-    var suggestions;
-
-    if( caseSensitive ){
-      query = query.trim();
-      tokens = this.tokenize(query);
-    }
-    else if( getDataType(source) === 'array' ){
-      query = query.trim().toLowerCase();
-      tokens = this.tokenize(query);
-      source = source.map(function(e){ return e.toLowerCase(); });
-    }
-    else if( getDataType(source) === 'object' ){
-      query = query.trim().toLowerCase();
-      tokens = this.tokenize(query);
-    }
-
-    if( getDataType(source) === 'array' ) {
-      suggestions = getSimilarWords(query, source, null, threshold);
-    }
-
-    else if ( getDataType(source) === 'object' ) {
-      //store object values in an array:
-      var values = [];
-      for(var key in source){
-        values.push(source[key]);
-      }
-      if( !caseSensitive ){
-        values = values.map(function(e){ return e.toLowerCase(); });
-      }
-
-      suggestions = getSimilarWords(query, values, null, threshold);
-    }
-
-    if( suggestions != "" && typeof suggestions != "undefined"){
-      return sortResults( createUniqueArray(suggestions), query ).slice(0, limit);
-    }
-    else {
-      return null;
-    }
-  }
 
 
 
@@ -363,15 +326,48 @@
   }
 
 
-  /* Since arrays are technically objects, this helps to differentiate */
+
+  /* Since arrays are technically objects, this helps to differentiate the two */
   function getDataType(source){
     if( source && typeof source === 'object' && source.constructor === Array ){
       return "array";
     } else if( source && typeof source === 'object' && source.constructor === Object ){
       return "object";
-    } else{
+    } else {
       return null;
     }
+  }
+
+
+
+  /* Removes unimportant words from the query */
+  function removeStopWords(query) {
+    var words = query.split(" ");
+    var newQuery = [];
+
+    //Mark stop word tokens as 'undefined'
+    for( let i=0; i<words.length; i++){
+      switch( words[i].toLowerCase() ){
+        case "the":
+        case "a":
+        case "to":
+        case "on":
+        case "in":
+        case "is":
+        case "and":
+          words[i] = undefined;
+          break;
+      }
+    }
+
+    //Only move elements that are defined to 'newQuery' array
+    for(let i=0; i<words.length; i++){
+      if(words[i] != undefined){
+        newQuery.push(words[i])
+      }
+    }
+
+    return newQuery.join(" ");
   }
 
 
