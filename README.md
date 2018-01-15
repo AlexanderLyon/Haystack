@@ -5,7 +5,7 @@ Just provide the input form and the source data to search (as an array or object
 
 ## To initialize Haystack:
 
-`var haystack = new Haystack({
+`const haystack = new Haystack({
   caseSensitive: false,
   flexibility: 2,
   stemming: false,
