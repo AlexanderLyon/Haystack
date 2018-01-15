@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 2.0
+ * Version 2.1
  * https://github.com/alyon011/Haystack
  */
 
@@ -92,6 +92,7 @@
         }
       }
 
+
       /* Search */
       //console.log('Searching for "' + query + '"');
 
@@ -99,7 +100,7 @@
 
         // Basic search:
         for(let i=0; i<source.length; i++){
-          if( source[i] == query ){
+          if( source[i].indexOf(query) != -1 ){
             results.push(source[i]);
           }
         }
@@ -134,7 +135,7 @@
           var value = source[key];
 
           // Basic search:
-          if( value === query ){
+          if( value.indexOf(query) != -1 ){
             results.push(value);
           }
 
