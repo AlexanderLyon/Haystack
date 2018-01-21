@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 2.1
+ * Version 2.2
  * https://github.com/alyon011/Haystack
  */
 
@@ -105,19 +105,19 @@
           }
         }
 
+        // Is each token found, just in a scrambled order?
+        for(let i=0; i<source.length; i++){
+          let allFound = true;
+          for(let j=0; j<tokens.length; j++){
+            if(source[i].indexOf(tokens[j]) == -1 ){
+              allFound = false;
+            }
+          }
+          if( allFound ){ results.push(source[i]); }
+        }
+
         // If flexibility is set, run a more comprehensive search:
         if( flexibility > 0 ){
-
-          // Is each token found, just in a scrambled order?
-          for(let i=0; i<source.length; i++){
-            let allFound = true;
-            for(let j=0; j<tokens.length; j++){
-              if(source[i].indexOf(tokens[j]) == -1 ){
-                allFound = false;
-              }
-            }
-            if( allFound ){ results.push(source[i]); }
-          }
 
           // Find similar phrases within this flexibility range:
           let similarWords = getSimilarWords(query, source, null, flexibility);
@@ -139,17 +139,17 @@
             results.push(value);
           }
 
+          // Is each token found, just in a scrambled order?
+          let allFound = true;
+          for(let i=0; i<tokens.length; i++){
+            if(value.indexOf(tokens[i]) == -1 ){
+              allFound = false;
+            }
+          }
+          if( allFound ){ results.push(value); }
+
           // If flexibility is set, run a more comprehensive search:
           if( flexibility > 0 ){
-
-            // Is each token found, just in a scrambled order?
-            let allFound = true;
-            for(let i=0; i<tokens.length; i++){
-              if(value.indexOf(tokens[i]) == -1 ){
-                allFound = false;
-              }
-            }
-            if( allFound ){ results.push(value); }
 
             // Is this value close enough to the query?
             if( levenshtein(query.toLowerCase(), value.toLowerCase()) <= flexibility ){
