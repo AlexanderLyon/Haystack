@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 2.1
+ * Version 2.2
  * https://github.com/alyon011/Haystack
  */
 
@@ -15,7 +15,7 @@
     this.ignoreStopWords = null;  // Ignore words unimportant to query
 
     // Default options:
-    var defaults = {
+    const defaults = {
       caseSensitive: false,
       flexibility: 2,
       stemming: false,
@@ -43,13 +43,13 @@
       The accuracy of these results is determined by the value set for 'flexibility'
       The maximum results returned is determined by the optional 'limit' parameter
      ------------------------------------------------------- */
-    var caseSensitive = this.options.caseSensitive;
-    var flexibility = this.options.flexibility;
-    var stemming = this.options.stemming;
-    var exclusions = this.options.exclusions;
-    var ignoreStopWords = this.options.ignoreStopWords;
-    var results = [];
-    var tokens;
+    const caseSensitive = this.options.caseSensitive;
+    const flexibility = this.options.flexibility;
+    const stemming = this.options.stemming;
+    const exclusions = this.options.exclusions;
+    const ignoreStopWords = this.options.ignoreStopWords;
+    let results = [];
+    let tokens;
 
     if(query != "") {
 
@@ -66,13 +66,11 @@
       if( caseSensitive ){
         query = query.trim();
         tokens = this.tokenize(query);
-      }
-      else if( getDataType(source) === 'array' ){
+      } else if( getDataType(source) === 'array' ){
         query = query.trim().toLowerCase();
         tokens = this.tokenize(query);
         source = source.map(function(e){ return e.toLowerCase(); });
-      }
-      else if( getDataType(source) === 'object' ){
+      } else if( getDataType(source) === 'object' ){
         query = query.trim().toLowerCase();
         tokens = this.tokenize(query);
         for(key in source){ source[key] = source[key].toLowerCase(); }
@@ -98,60 +96,63 @@
 
       if( getDataType(source) === 'array' ) {
 
-        // Basic search:
+        // Test if EVERY token is found:
         for(let i=0; i<source.length; i++){
-          if( source[i].indexOf(query) != -1 ){
-            results.push(source[i]);
+          let allTokensFound = true;
+          for(let j=0; j<tokens.length; j++){
+            if(source[i].indexOf(tokens[j]) == -1 ){
+              allTokensFound = false;
+              break;
+            }
+          }
+          if( allTokensFound ){ results.push(source[i]); }
+        }
+
+        // Test if SOME tokens are found:
+        for(let i=0; i<source.length; i++){
+          for(let j=0; j<tokens.length; j++){
+            if( source[i].indexOf(tokens[j]) != -1 ){
+              results.push(source[i]);
+            }
           }
         }
 
-        // If flexibility is set, run a more comprehensive search:
+
+        // If flexibility is set, find similar phrases within acceptable flexibility range:
         if( flexibility > 0 ){
-
-          // Is each token found, just in a scrambled order?
-          for(let i=0; i<source.length; i++){
-            let allFound = true;
-            for(let j=0; j<tokens.length; j++){
-              if(source[i].indexOf(tokens[j]) == -1 ){
-                allFound = false;
-              }
-            }
-            if( allFound ){ results.push(source[i]); }
-          }
-
-          // Find similar phrases within this flexibility range:
           let similarWords = getSimilarWords(query, source, null, flexibility);
           if( similarWords != null ){
             for(let i=0; i<similarWords.length; i++){
               results.push( similarWords[i] );
             }
           }
-
         }
       }
 
       else if( getDataType(source) === 'object' ) {
         for( let key in source ) {
-          var value = source[key];
+          const value = source[key];
 
-          // Basic search:
-          if( value.indexOf(query) != -1 ){
-            results.push(value);
+          // Test if EVERY token is found:
+          let allTokensFound = true;
+          for(let i=0; i<tokens.length; i++){
+            if( value.indexOf(tokens[i]) == -1 ){
+              allTokensFound = false;
+              break;
+            }
+          }
+          if( allTokensFound ){ results.push(value); }
+
+          // Test if SOME tokens are found:
+          for(let i=0; i<tokens.length; i++){
+            if( value.indexOf(tokens[i]) != -1 ){
+              results.push(value);
+            }
           }
 
-          // If flexibility is set, run a more comprehensive search:
+
+          // If flexibility is set, test if this value is close enough to the query:
           if( flexibility > 0 ){
-
-            // Is each token found, just in a scrambled order?
-            let allFound = true;
-            for(let i=0; i<tokens.length; i++){
-              if(value.indexOf(tokens[i]) == -1 ){
-                allFound = false;
-              }
-            }
-            if( allFound ){ results.push(value); }
-
-            // Is this value close enough to the query?
             if( levenshtein(query.toLowerCase(), value.toLowerCase()) <= flexibility ){
               results.push(value);
             }
@@ -194,9 +195,9 @@
 
   /* Extends defaults with user options */
   function extendDefaults(source, properties) {
-    var property;
-    for (property in properties) {
-      if ( properties.hasOwnProperty(property) ) {
+    let property;
+    for(property in properties) {
+      if( properties.hasOwnProperty(property) ) {
         source[property] = properties[property];
       }
     }
@@ -207,14 +208,14 @@
 
   /* Returns numeric Levenshtein distance between two strings */
   function levenshtein(word1, word2) {
-    var cost = new Array(),
+    let cost = new Array(),
       str1 = word1,
       str2 = word2,
       n = str1.length,
       m = word1.length,
       i, j;
-    var minimum = function(a, b, c) {
-      var min = a;
+    let minimum = function(a, b, c) {
+      let min = a;
       if (b < min) {
         min = b;
       }
@@ -229,7 +230,7 @@
     if (m == 0) {
       return;
     }
-    for (var i = 0; i <= n; i++) {
+    for (let i = 0; i <= n; i++) {
       cost[i] = new Array();
     }
     for (i = 0; i <= n; i++) {
@@ -239,9 +240,9 @@
       cost[0][j] = j;
     }
     for (i = 1; i <= n; i++) {
-      var x = str1.charAt(i - 1);
+      let x = str1.charAt(i - 1);
       for (j = 1; j <= m; j++) {
-        var y = str2.charAt(j - 1);
+        let y = str2.charAt(j - 1);
         if (x == y) {
           cost[i][j] = cost[i - 1][j - 1];
         } else {
@@ -256,7 +257,7 @@
 
   /* Returns an array of suggested words */
   function filter(fn, source, bind) {
-    var resultSet = [];
+    let resultSet = [];
     for (let i = 0, word; i < source.length; i++) {
       if (i in source) {
         word = source[i];
@@ -272,18 +273,18 @@
 
   /* Returns an array of similar words, with a specified limit */
   function getSimilarWords(input, source, limit, threshold=2){
-    var resultSet = [];
+    let resultSet = [];
 
     // Input is within threshold of some source value:
-    var matches = filter(
+    let matches = filter(
       function(sourceWord) {
-        var levDist = levenshtein(input, sourceWord);
+        let levDist = levenshtein(input, sourceWord);
         if ( levDist >= 0 && levDist <= threshold ) {
           return sourceWord;
         }
       }, source);
 
-    var matches = sortResults(matches, input);
+    matches = sortResults(matches, input);
 
     if( limit ){
       for(let i=0; i<limit; i++){
@@ -301,10 +302,10 @@
 
   /* Sorts results in ascending order using bubble sort */
   function sortResults(results, query) {
-    var swapped;
+    let swapped;
     do {
       swapped = false;
-      for(var i = 0; i < results.length; i++) {
+      for(let i = 0; i < results.length; i++) {
         if(results[i] && results[i+1] && levenshtein(query,results[i]) > levenshtein(query,results[i+1]) ) {
           let temp = results[i];
           results[i] = results[i+1];
@@ -343,8 +344,8 @@
 
   /* Removes unimportant words from the query */
   function removeStopWords(query) {
-    var words = query.split(" ");
-    var newQuery = [];
+    let words = query.split(" ");
+    let newQuery = [];
 
     //Mark stop word tokens as 'undefined'
     for( let i=0; i<words.length; i++){
