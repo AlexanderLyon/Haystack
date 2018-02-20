@@ -1,5 +1,5 @@
 # Haystack
-![Haystack](https://raw.githubusercontent.com/alyon011/Haystack/Development/assets/headerImage.png)
+![Haystack](https://raw.githubusercontent.com/alyon011/Haystack/Development/assets/header.png)
 
 A Lightweight search plugin for JavaScript with zero dependencies
 
