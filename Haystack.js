@@ -1,4 +1,4 @@
-/*
+/* 
  * Haystack.js
  * By: Alexander Lyon
  * Version 2.2
