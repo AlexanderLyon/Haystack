@@ -1,4 +1,6 @@
 # Haystack
+![Haystack](https://raw.githubusercontent.com/alyon011/Haystack/Development/assets/headerImage.png)
+
 A Lightweight search plugin for JavaScript with zero dependencies
 
 Just provide the input form and the source data to search (as an array or object)
