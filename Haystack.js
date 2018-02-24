@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 2.2
+ * Version 3.0
  * https://github.com/alyon011/Haystack
  */
 
@@ -11,7 +11,7 @@
     this.caseSensitive = null;    // Does capitalization matter?
     this.flexibility = null;      // How strict or loose search matches and suggestions are
     this.stemming = null;         // Reduces words to a more basic form
-    this.exclusions = null;       // Which characters are omitted from search queries
+    this.exclusions = null;       // Which characters are ignored in search queries
     this.ignoreStopWords = null;  // Ignore words unimportant to query
 
     // Default options:
@@ -342,7 +342,7 @@
 
 
 
-  /* Removes unimportant words from the query */
+  /* Removes stop words from the query */
   function removeStopWords(query) {
     let words = query.split(" ");
     let newQuery = [];
@@ -356,6 +356,7 @@
         case "on":
         case "in":
         case "is":
+        case "of":
         case "and":
           words[i] = undefined;
           break;
@@ -371,6 +372,7 @@
 
     return newQuery.join(" ");
   }
+
 
 
 }());
