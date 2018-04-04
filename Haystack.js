@@ -74,7 +74,7 @@
       } else if( getDataType(source) === 'object' ){
         query = query.trim().toLowerCase();
         tokens = this.tokenize(query);
-        for(key in source){ source[key] = source[key].toLowerCase(); }
+        for(let key in source){ source[key] = source[key].toLowerCase(); }
       }
 
       if ( stemming ){
@@ -196,8 +196,7 @@
 
   /* Extends defaults with user options */
   function extendDefaults(defaults, properties) {
-    let property;
-    for(property in properties) {
+    for(let property in properties) {
       if( properties.hasOwnProperty(property) ) {
         defaults[property] = properties[property];
       }
