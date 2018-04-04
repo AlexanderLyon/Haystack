@@ -1,13 +1,14 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 3.0
- * https://github.com/alyon011/Haystack
+ * Version 3.1
+ * https://github.com/AlexanderLyon/Haystack
  */
 
 (function() {
+  'use strict';
 
-  this.Haystack = function() {
+  window.Haystack = function() {
     this.caseSensitive = null;    // Does capitalization matter?
     this.flexibility = null;      // How strict or loose search matches and suggestions are
     this.stemming = null;         // Reduces words to a more basic form
@@ -194,14 +195,14 @@
   /********** Private methods: **********/
 
   /* Extends defaults with user options */
-  function extendDefaults(source, properties) {
+  function extendDefaults(defaults, properties) {
     let property;
     for(property in properties) {
       if( properties.hasOwnProperty(property) ) {
-        source[property] = properties[property];
+        defaults[property] = properties[property];
       }
     }
-    return source;
+    return defaults;
   }
 
 
@@ -321,7 +322,7 @@
 
   /* Removes duplicates from an array */
   function createUniqueArray(arr) {
-    uniqueArray = arr.filter(function(item, pos) {
+    let uniqueArray = arr.filter(function(item, pos) {
       return arr.indexOf(item) == pos;
     });
     return uniqueArray;

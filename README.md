@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/alyon011/Haystack/Development/assets/header.png" alt="Haystack"/>
+  <img src="https://raw.githubusercontent.com/AlexanderLyon/Haystack/Development/assets/header.png" alt="Haystack"/>
 </p>
 
 ## Overview:
@@ -24,7 +24,7 @@ const haystack = new Haystack({
 haystack.search(searchTerm, source, [limit]);
 ```
 
-Returns either an array of matches within your `flexibility` range, or `null` if there are no matches. If no limit is given, the default length of results will be 1.
+Returns either an array of matches within your `flexibility` range, or `null` if there are no matches. If no limit is given, the default number of results will be 1.
 
 ```javascript
 haystack.tokenize(searchTerm, [delimiter]);
