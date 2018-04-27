@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 3.1
+ * Version 3.2
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -38,12 +38,13 @@
 
   /********** Public methods: **********/
 
-  Haystack.prototype.search = function( query, source, limit=1 ) {
+  Haystack.prototype.search = function( query, source, limit ) {
     /* -------------------------------------------------------
       Returns an array of matches, or null if no matches are found
       The accuracy of these results is determined by the value set for 'flexibility'
       The maximum results returned is determined by the optional 'limit' parameter
      ------------------------------------------------------- */
+    limit = (typeof limit !== 'undefined') ? limit : 1;
     const caseSensitive = this.options.caseSensitive;
     const flexibility = this.options.flexibility;
     const stemming = this.options.stemming;
@@ -181,10 +182,11 @@
 
 
 
-  Haystack.prototype.tokenize = function( input, delimiter = " " ) {
+  Haystack.prototype.tokenize = function( input, delimiter ) {
     /* -------------------------------------------------------
       Splits string into tokens based on specified delimiter
      ------------------------------------------------------- */
+    delimiter = (typeof delimiter !== 'undefined') ? delimiter : " ";
     return input.split(delimiter);
   }
 
@@ -272,7 +274,8 @@
 
 
   /* Returns an array of similar words, with a specified limit */
-  function getSimilarWords(input, source, limit, threshold=2){
+  function getSimilarWords(input, source, limit, threshold){
+    threshold = (typeof threshold !== 'undefined') ? threshold : 2;
     let resultSet = [];
 
     // Input is within threshold of some source value:
@@ -372,7 +375,6 @@
 
     return newQuery.join(" ");
   }
-
 
 
 }());
