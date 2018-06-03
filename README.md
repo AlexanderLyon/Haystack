@@ -15,7 +15,7 @@ npm i haystack-search
 
 Import Haystack into your script
 ```javascript
-import Haystack from './Haystack';
+import Haystack from 'haystack-search';
 ```
 ```javascript
 const haystack = new Haystack({
