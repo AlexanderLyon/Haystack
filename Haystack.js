@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.0
+ * Version 4.0.1
  * https://github.com/AlexanderLyon/Haystack
  */
 
