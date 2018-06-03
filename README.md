@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/AlexanderLyon/Haystack/Development/assets/header.png" alt="Haystack"/>
-</p>
+# Haystack
 
 ## Overview:
 
@@ -8,8 +6,14 @@ Haystack is a simple search / suggestion plugin that doesn't require any depende
 
 **For an easy to implement UI version which includes a pre-built search field and suggestion dropdown, see [Haystack UI](https://github.com/AlexanderLyon/Haystack-UI "Haystack UI")**
 
-## To initialize Haystack:
+## Installation:
 
+Add Haystack to your project
+```shell
+npm i haystack-search
+```
+
+Import Haystack into your script
 ```javascript
 import Haystack from './Haystack';
 ```

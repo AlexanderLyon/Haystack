@@ -1,0 +1,25 @@
+{
+  "name": "haystack-search",
+  "version": "4.0.0",
+  "description": "Search for approximate matches to a query",
+  "main": "Haystack.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexanderLyon/Haystack.git"
+  },
+  "keywords": [
+    "haystack",
+    "search",
+    "levenshtein",
+    "fuzzy-search"
+  ],
+  "author": "Alexander Lyon",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AlexanderLyon/Haystack/issues"
+  },
+  "homepage": "https://github.com/AlexanderLyon/Haystack#readme"
+}
