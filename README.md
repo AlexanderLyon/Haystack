@@ -11,6 +11,8 @@ Haystack is a simple search / suggestion plugin that doesn't require any depende
 ## To initialize Haystack:
 
 ```javascript
+import Haystack from './Haystack';
+
 const haystack = new Haystack({
   caseSensitive: false,
   flexibility: 2,
