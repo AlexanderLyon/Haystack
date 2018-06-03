@@ -1,6 +1,6 @@
 {
   "name": "haystack-search",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Search for approximate matches to a query",
   "main": "Haystack.js",
   "scripts": {
