@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.0.1
+ * Version 4.0.2
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -49,7 +49,7 @@ export default class Haystack {
         query = removeStopWords(query);
       }
 
-      if( exclusions ){
+      if (exclusions) {
         query = query.replace(exclusions, "");
       }
 
