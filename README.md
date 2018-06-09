@@ -2,7 +2,7 @@
 [![npm](https://img.shields.io/npm/v/haystack-search.svg?style=flat-square)](https://www.npmjs.com/package/haystack-search)
 
 ## Overview:
-Haystack is a simple search / suggestion plugin that doesn't require any dependencies to run. Just provide a way for your users to enter their query and the source data to search (as an array or object), and Haystack will return a list of approximate matches. The lower the `flexibility` the more strict your matches will be.
+Haystack is a simple search / suggestion module that doesn't require any dependencies to run. Just provide a way for your users to enter their query and the source data to search (as an array or object), and Haystack will return a list of approximate matches. The lower the `flexibility` the more strict your matches will be.
 
 **For an easy to implement UI version which includes a pre-built search field and suggestion dropdown, see [Haystack UI](https://github.com/AlexanderLyon/Haystack-UI "Haystack UI")**
 
