@@ -7,14 +7,14 @@ Haystack is a simple search / suggestion module that doesn't require any depende
 **For an easy to implement UI version which includes a pre-built search field and suggestion dropdown, see [Haystack UI](https://github.com/AlexanderLyon/Haystack-UI "Haystack UI")**
 
 ## Installation:
-Add Haystack to your project:
+Using npm:
 ```shell
 npm i haystack-search
 ```
 
-Import Haystack into your script:
+Require Haystack in your Node project:
 ```javascript
-import Haystack from 'haystack-search';
+const Haystack = require('haystack-search');
 ```
 ```javascript
 const haystack = new Haystack(options);
