@@ -1,12 +1,12 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.0.2
+ * Version 4.1.0
  * https://github.com/AlexanderLyon/Haystack
  */
 
 
-export default class Haystack {
+class Haystack {
   constructor() {
     // Default options:
     const defaults = {
@@ -177,7 +177,7 @@ export default class Haystack {
     return input.split(delimiter);
   }
 
-} // End class
+}
 
 
 
@@ -354,3 +354,6 @@ function removeStopWords(query) {
 
   return newQuery.join(" ");
 }
+
+
+module.exports = Haystack;

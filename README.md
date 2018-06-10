@@ -45,7 +45,7 @@ haystack.tokenize(searchTerm, [delimiter]);
 
 By default this splits on whitespaces, but you can define a custom delimiter to use instead.
 
-## Features coming soon:
+## Contributions:
 
 Contributions and suggestions for improvement are always welcome! Some features planned for future versions include:
 
