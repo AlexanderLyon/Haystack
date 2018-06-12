@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.1.0
+ * Version 4.2.0
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -39,6 +39,7 @@ class Haystack {
     const stemming = this.options.stemming;
     const exclusions = this.options.exclusions;
     const ignoreStopWords = this.options.ignoreStopWords;
+    const sourceDataType = getDataType(source);
     let results = [];
     let tokens;
 
@@ -56,11 +57,21 @@ class Haystack {
       if (caseSensitive) {
         query = query.trim();
         tokens = this.tokenize(query);
-      } else if (getDataType(source) === 'array') {
+        if (sourceDataType === 'string') {
+          source = this.tokenize(source);
+        }
+      }
+      else if (sourceDataType === 'string') {
         query = query.trim().toLowerCase();
         tokens = this.tokenize(query);
-        source = source.map(function(e){ return e.toLowerCase(); });
-      } else if (getDataType(source) === 'object') {
+        source = this.tokenize(source).map((i) => { return i.toLowerCase(); });
+      }
+      else if (sourceDataType === 'array') {
+        query = query.trim().toLowerCase();
+        tokens = this.tokenize(query);
+        source = source.map((i) => { return i.toLowerCase(); });
+      }
+      else if (sourceDataType === 'object') {
         query = query.trim().toLowerCase();
         tokens = this.tokenize(query);
         for (let key in source) { source[key] = source[key].toLowerCase(); }
@@ -86,8 +97,7 @@ class Haystack {
       /* Search */
       //console.log('Searching for "' + query + '"');
 
-      if (getDataType(source) === 'array') {
-
+      if (sourceDataType === 'array' || sourceDataType === 'string') {
         // Test if EVERY token is found:
         for (let i=0; i<source.length; i++) {
           let allTokensFound = true;
@@ -121,7 +131,7 @@ class Haystack {
         }
       }
 
-      else if (getDataType(source) === 'object') {
+      else if (sourceDataType === 'object') {
         for (let key in source) {
           const value = source[key];
 
@@ -182,8 +192,8 @@ class Haystack {
 
 
 
-/* Extends defaults with user options */
 function extendDefaults(defaults, properties) {
+  /* Extends defaults with user options */
   for (let property in properties) {
     if (properties.hasOwnProperty(property)) {
       defaults[property] = properties[property];
@@ -193,8 +203,8 @@ function extendDefaults(defaults, properties) {
 }
 
 
-/* Returns numeric Levenshtein distance between two strings */
 function levenshtein(word1, word2) {
+  /* Returns numeric Levenshtein distance between two strings */
   let cost = new Array(),
     str1 = word1,
     str2 = word2,
@@ -241,8 +251,8 @@ function levenshtein(word1, word2) {
 };
 
 
-/* Returns an array of suggested words */
 function filter(fn, source, bind) {
+  /* Returns an array of suggested words */
   let resultSet = [];
   for (let i = 0, word; i < source.length; i++) {
     if (i in source) {
@@ -256,8 +266,8 @@ function filter(fn, source, bind) {
 };
 
 
-/* Returns an array of similar words, with a specified limit */
 function getSimilarWords(input, source, limit, threshold){
+  /* Returns an array of similar words, with a specified limit */
   threshold = (typeof threshold !== 'undefined') ? threshold : 2;
   let resultSet = [];
 
@@ -285,8 +295,8 @@ function getSimilarWords(input, source, limit, threshold){
 }
 
 
-/* Sorts results in ascending order using bubble sort */
 function sortResults(results, query) {
+  /* Sorts results in ascending order using bubble sort */
   let swapped;
   do {
     swapped = false;
@@ -303,8 +313,8 @@ function sortResults(results, query) {
 }
 
 
-/* Removes duplicates from an array */
 function createUniqueArray(arr) {
+  /* Removes duplicates from an array */
   let uniqueArray = arr.filter(function(item, pos) {
     return arr.indexOf(item) == pos;
   });
@@ -312,20 +322,25 @@ function createUniqueArray(arr) {
 }
 
 
-/* Since arrays are technically objects, this helps to differentiate the two */
 function getDataType(source){
-  if (source && typeof source === 'object' && source.constructor === Array) {
-    return "array";
-  } else if (source && typeof source === 'object' && source.constructor === Object) {
-    return "object";
-  } else {
+  /* Since arrays are technically objects, this helps to differentiate the two */
+  if (source) {
+    if (typeof source === 'object' && source.constructor === Array) {
+      return "array";
+    } else if (typeof source === 'object' && source.constructor === Object) {
+      return "object";
+    } else if (typeof source === 'string' && source.constructor === String) {
+      return "string";
+    }
+  }
+   else {
     return null;
   }
 }
 
 
-/* Removes stop words from the query */
 function removeStopWords(query) {
+  /* Removes stop words from the query */
   let words = query.split(" ");
   let newQuery = [];
 
@@ -354,6 +369,7 @@ function removeStopWords(query) {
 
   return newQuery.join(" ");
 }
+
 
 
 module.exports = Haystack;

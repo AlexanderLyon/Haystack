@@ -1,6 +1,6 @@
 {
   "name": "haystack-search",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Search for approximate matches to a query",
   "main": "Haystack.js",
   "scripts": {
@@ -13,8 +13,9 @@
   "keywords": [
     "haystack",
     "search",
+    "fuzzy-search",
     "levenshtein",
-    "fuzzy-search"
+    "needle"
   ],
   "author": "Alexander Lyon",
   "license": "MIT",
