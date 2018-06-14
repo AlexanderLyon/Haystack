@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.2.0
+ * Version 4.3.0
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -74,7 +74,6 @@ class Haystack {
       else if (sourceDataType === 'object') {
         query = query.trim().toLowerCase();
         tokens = this.tokenize(query);
-        for (let key in source) { source[key] = source[key].toLowerCase(); }
       }
 
       if (stemming) {
@@ -132,34 +131,11 @@ class Haystack {
       }
 
       else if (sourceDataType === 'object') {
-        for (let key in source) {
-          const value = source[key];
-
-          // Test if EVERY token is found:
-          let allTokensFound = true;
-          for (let i=0; i<tokens.length; i++) {
-            if (value.indexOf(tokens[i]) == -1) {
-              allTokensFound = false;
-              break;
-            }
+        const objSearchResults = searchObject(source, query, tokens, caseSensitive, flexibility);
+        if (objSearchResults.length > 0) {
+          for (let i=0; i<objSearchResults.length; i++) {
+            results.push(objSearchResults[i]);
           }
-          if (allTokensFound) { results.push(value); }
-
-          // Test if SOME tokens are found:
-          for (let i=0; i<tokens.length; i++) {
-            if (value.indexOf(tokens[i]) != -1) {
-              results.push(value);
-            }
-          }
-
-
-          // If flexibility is set, test if this value is close enough to the query:
-          if (flexibility > 0) {
-            if (levenshtein(query.toLowerCase(), value.toLowerCase()) <= flexibility) {
-              results.push(value);
-            }
-          }
-
         }
       }
 
@@ -200,6 +176,53 @@ function extendDefaults(defaults, properties) {
     }
   }
   return defaults;
+}
+
+
+function searchObject(obj, query, tokens, caseSensitive, flexibility, currentResults) {
+  /* Recursively searches an object for token matches */
+  currentResults = (typeof currentResults !== 'undefined') ? currentResults : [];
+
+  for (let key in obj) {
+    let value = obj[key];
+
+    if (getDataType(value) === 'object') {
+      currentResults = searchObject(value, query, tokens, caseSensitive, flexibility, currentResults);
+    }
+
+    else {
+      // Make sure value is a string:
+      value = caseSensitive ? String(value) : String(value).toLowerCase();
+
+      // Test if EVERY token is found:
+      let allTokensFound = true;
+      for (let i=0; i<tokens.length; i++) {
+        if (value.indexOf(tokens[i]) == -1) {
+          allTokensFound = false;
+          break;
+        }
+      }
+      if (allTokensFound) { currentResults.push(value); }
+
+      // Test if SOME tokens are found:
+      for (let i=0; i<tokens.length; i++) {
+        if (value.indexOf(tokens[i]) != -1) {
+          currentResults.push(value);
+        }
+      }
+
+
+      // If flexibility is set, test if this value is close enough to the query:
+      if (flexibility > 0) {
+        if (levenshtein(query.toLowerCase(), value.toLowerCase()) <= flexibility) {
+          currentResults.push(value);
+        }
+      }
+    }
+
+  }
+
+  return currentResults;
 }
 
 
