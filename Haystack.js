@@ -94,48 +94,16 @@ class Haystack {
 
 
       /* Search */
-      //console.log('Searching for "' + query + '"');
-
       if (sourceDataType === 'array' || sourceDataType === 'string') {
-        // Test if EVERY token is found:
-        for (let i=0; i<source.length; i++) {
-          let allTokensFound = true;
-          for (let j=0; j<tokens.length; j++) {
-            if (source[i].indexOf(tokens[j]) == -1) {
-              allTokensFound = false;
-              break;
-            }
-          }
-          if (allTokensFound) { results.push(source[i]); }
-        }
-
-        // Test if SOME tokens are found:
-        for (let i=0; i<source.length; i++) {
-          for (let j=0; j<tokens.length; j++) {
-            if (source[i].indexOf(tokens[j]) != -1) {
-              results.push(source[i]);
-            }
-          }
-        }
-
-
-        // If flexibility is set, find similar phrases within acceptable flexibility range:
-        if (flexibility > 0) {
-          let similarWords = getSimilarWords(query, source, null, flexibility);
-          if (similarWords != null) {
-            for (let i=0; i<similarWords.length; i++) {
-              results.push( similarWords[i] );
-            }
-          }
-        }
+        const searchResults = searchArray(source, query, tokens, this.options);
+      }
+      else if (sourceDataType === 'object') {
+        const searchResults = searchObject(source, query, tokens, this.options);
       }
 
-      else if (sourceDataType === 'object') {
-        const objSearchResults = searchObject(source, query, tokens, caseSensitive, flexibility);
-        if (objSearchResults.length > 0) {
-          for (let i=0; i<objSearchResults.length; i++) {
-            results.push(objSearchResults[i]);
-          }
+      if (searchResults.length > 0) {
+        for (let i=0; i<searchResults.length; i++) {
+          results.push(searchResults[i]);
         }
       }
 
@@ -179,7 +147,47 @@ function extendDefaults(defaults, properties) {
 }
 
 
-function searchObject(obj, query, tokens, caseSensitive, flexibility, currentResults) {
+function searchArray(source, query, tokens, options) {
+  let currentResults = [];
+
+  for (let i=0; i<source.length; i++) {
+    // Test if EVERY token is found:
+    let allTokensFound = true;
+    for (let j=0; j<tokens.length; j++) {
+      if (source[i].indexOf(tokens[j]) == -1) {
+        allTokensFound = false;
+        break;
+      }
+    }
+    if (allTokensFound) {
+      currentResults.push(source[i]);
+    }
+    else if (true) {
+      // Test if SOME tokens are found:
+      // Will get a broader range of matches, many of which not very close
+      for (let j=0; j<tokens.length; j++) {
+        if (source[i].indexOf(tokens[j]) != -1) {
+          currentResults.push(source[i]);
+        }
+      }
+    }
+  }
+
+  // If flexibility is set, find similar phrases within acceptable flexibility range:
+  if (options.flexibility > 0) {
+    let similarWords = getSimilarWords(query, source, null, options.flexibility);
+    if (similarWords != null) {
+      for (let i=0; i<similarWords.length; i++) {
+        currentResults.push( similarWords[i] );
+      }
+    }
+  }
+
+  return currentResults;
+}
+
+
+function searchObject(obj, query, tokens, options, currentResults) {
   /* Recursively searches an object for token matches */
   currentResults = (typeof currentResults !== 'undefined') ? currentResults : [];
 
@@ -187,12 +195,11 @@ function searchObject(obj, query, tokens, caseSensitive, flexibility, currentRes
     let value = obj[key];
 
     if (getDataType(value) === 'object') {
-      currentResults = searchObject(value, query, tokens, caseSensitive, flexibility, currentResults);
+      currentResults = searchObject(value, query, tokens, options, currentResults);
     }
-
     else {
       // Make sure value is a string:
-      value = caseSensitive ? String(value) : String(value).toLowerCase();
+      value = options.caseSensitive ? String(value) : String(value).toLowerCase();
 
       // Test if EVERY token is found:
       let allTokensFound = true;
@@ -211,10 +218,9 @@ function searchObject(obj, query, tokens, caseSensitive, flexibility, currentRes
         }
       }
 
-
       // If flexibility is set, test if this value is close enough to the query:
-      if (flexibility > 0) {
-        if (levenshtein(query.toLowerCase(), value.toLowerCase()) <= flexibility) {
+      if (options.flexibility > 0) {
+        if (levenshtein(query.toLowerCase(), value.toLowerCase()) <= options.flexibility) {
           currentResults.push(value);
         }
       }
