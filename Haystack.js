@@ -40,6 +40,7 @@ class Haystack {
     const exclusions = this.options.exclusions;
     const ignoreStopWords = this.options.ignoreStopWords;
     const sourceDataType = getDataType(source);
+    source = (sourceDataType === 'string') ? this.tokenize(source) : source;
     let results = [];
     let tokens;
 
@@ -57,24 +58,11 @@ class Haystack {
       if (caseSensitive) {
         query = query.trim();
         tokens = this.tokenize(query);
-        if (sourceDataType === 'string') {
-          source = this.tokenize(source);
-        }
-      }
-      else if (sourceDataType === 'string') {
-        query = query.trim().toLowerCase();
-        tokens = this.tokenize(query);
-        source = this.tokenize(source).map((i) => { return i.toLowerCase(); });
-      }
-      else if (sourceDataType === 'array') {
-        query = query.trim().toLowerCase();
-        tokens = this.tokenize(query);
-        source = source.map((i) => { return i.toLowerCase(); });
-      }
-      else if (sourceDataType === 'object') {
+      } else {
         query = query.trim().toLowerCase();
         tokens = this.tokenize(query);
       }
+
 
       if (stemming) {
         // Removes 's' from the end of words, then rebuilds the query
@@ -94,11 +82,15 @@ class Haystack {
 
 
       /* Search */
-      if (sourceDataType === 'array' || sourceDataType === 'string') {
-        const searchResults = searchArray(source, query, tokens, this.options);
-      }
-      else if (sourceDataType === 'object') {
-        const searchResults = searchObject(source, query, tokens, this.options);
+      let searchResults;
+      switch (sourceDataType) {
+        case 'array':
+        case 'string':
+          searchResults = searchArray(source, query, tokens, this.options);
+          break;
+        case 'object':
+          searchResults = searchObject(source, query, tokens, this.options);
+          break;
       }
 
       if (searchResults.length > 0) {
@@ -151,10 +143,13 @@ function searchArray(source, query, tokens, options) {
   let currentResults = [];
 
   for (let i=0; i<source.length; i++) {
-    // Test if EVERY token is found:
+    // Make sure value is a string:
+    source[i] = options.caseSensitive ? String(source[i]) : String(source[i]).toLowerCase();
+
+    // Test if every token is found:
     let allTokensFound = true;
     for (let j=0; j<tokens.length; j++) {
-      if (source[i].indexOf(tokens[j]) == -1) {
+      if (source[i].indexOf(tokens[j]) === -1) {
         allTokensFound = false;
         break;
       }
@@ -162,23 +157,11 @@ function searchArray(source, query, tokens, options) {
     if (allTokensFound) {
       currentResults.push(source[i]);
     }
-    else if (true) {
-      // Test if SOME tokens are found:
-      // Will get a broader range of matches, many of which not very close
-      for (let j=0; j<tokens.length; j++) {
-        if (source[i].indexOf(tokens[j]) != -1) {
-          currentResults.push(source[i]);
-        }
-      }
-    }
-  }
 
-  // If flexibility is set, find similar phrases within acceptable flexibility range:
-  if (options.flexibility > 0) {
-    let similarWords = getSimilarWords(query, source, null, options.flexibility);
-    if (similarWords != null) {
-      for (let i=0; i<similarWords.length; i++) {
-        currentResults.push( similarWords[i] );
+    // If flexibility is set, test if this value is within acceptable range:
+    if (options.flexibility > 0) {
+      if (levenshtein(query.toLowerCase(), source[i].toLowerCase()) <= options.flexibility) {
+        currentResults.push(source[i]);
       }
     }
   }
@@ -201,24 +184,17 @@ function searchObject(obj, query, tokens, options, currentResults) {
       // Make sure value is a string:
       value = options.caseSensitive ? String(value) : String(value).toLowerCase();
 
-      // Test if EVERY token is found:
+      // Test if every token is found:
       let allTokensFound = true;
       for (let i=0; i<tokens.length; i++) {
-        if (value.indexOf(tokens[i]) == -1) {
+        if (value.indexOf(tokens[i]) === -1) {
           allTokensFound = false;
           break;
         }
       }
       if (allTokensFound) { currentResults.push(value); }
 
-      // Test if SOME tokens are found:
-      for (let i=0; i<tokens.length; i++) {
-        if (value.indexOf(tokens[i]) != -1) {
-          currentResults.push(value);
-        }
-      }
-
-      // If flexibility is set, test if this value is close enough to the query:
+      // If flexibility is set, test if this value is within acceptable range:
       if (options.flexibility > 0) {
         if (levenshtein(query.toLowerCase(), value.toLowerCase()) <= options.flexibility) {
           currentResults.push(value);
@@ -295,7 +271,7 @@ function filter(fn, source, bind) {
 };
 
 
-function getSimilarWords(input, source, limit, threshold){
+function getSimilarWords(input, source, limit, threshold) {
   /* Returns an array of similar words, with a specified limit */
   threshold = (typeof threshold !== 'undefined') ? threshold : 2;
   let resultSet = [];
