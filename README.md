@@ -47,9 +47,7 @@ By default this splits on whitespaces, but you can define a custom delimiter to 
 
 ## Contributions
 
-Contributions and suggestions for improvement are always welcome! Some features planned for future versions include:
-
-- Improved stemming
+Contributions and suggestions for improvement are always welcome!
 
 ## License
 

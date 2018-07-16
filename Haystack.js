@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.3.0
+ * Version 4.3.1
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -27,6 +27,11 @@ class Haystack {
 
 
 
+  /**
+   * @param {string} query user-entered query
+   * @param {string[]|Object} source data to search
+   * @param {number} [limit=1] maximum number of results returned
+   */
   search(query, source, limit) {
     /* -------------------------------------------------------
       Returns an array of matches, or null if no matches are found
@@ -35,7 +40,6 @@ class Haystack {
      ------------------------------------------------------- */
     limit = (typeof limit !== 'undefined') ? limit : 1;
     const caseSensitive = this.options.caseSensitive;
-    const flexibility = this.options.flexibility;
     const stemming = this.options.stemming;
     const exclusions = this.options.exclusions;
     const ignoreStopWords = this.options.ignoreStopWords;
@@ -115,6 +119,10 @@ class Haystack {
 
 
 
+  /**
+   * @param {string} input text to tokenize
+   * @param {string} delimiter the points where the split should occur
+   */
   tokenize(input, delimiter) {
     /* -------------------------------------------------------
       Splits string into tokens based on specified delimiter
@@ -271,37 +279,8 @@ function filter(fn, source, bind) {
 };
 
 
-function getSimilarWords(input, source, limit, threshold) {
-  /* Returns an array of similar words, with a specified limit */
-  threshold = (typeof threshold !== 'undefined') ? threshold : 2;
-  let resultSet = [];
-
-  // Input is within threshold of some source value:
-  let matches = filter(
-    function(sourceWord) {
-      let levDist = levenshtein(input, sourceWord);
-      if (levDist >= 0 && levDist <= threshold) {
-        return sourceWord;
-      }
-    }, source);
-
-  matches = sortResults(matches, input);
-
-  if (limit) {
-    for (let i=0; i<limit; i++) {
-      resultSet.push( matches[i] );
-    }
-  }
-  else {
-    return matches;
-  }
-
-  return resultSet;
-}
-
-
 function sortResults(results, query) {
-  /* Sorts results in ascending order using bubble sort */
+  /* Sorts results in ascending order */
   let swapped;
   do {
     swapped = false;
@@ -327,8 +306,7 @@ function createUniqueArray(arr) {
 }
 
 
-function getDataType(source){
-  /* Since arrays are technically objects, this helps to differentiate the two */
+function getDataType(source) {
   if (source) {
     if (typeof source === 'object' && source.constructor === Array) {
       return "array";
@@ -345,7 +323,7 @@ function getDataType(source){
 
 
 function removeStopWords(query) {
-  /* Removes stop words from the query */
+  /* Removes common stop words from the query */
   let words = query.split(" ");
   let newQuery = [];
 
