@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.3.1
+ * Version 4.3.2
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -28,6 +28,7 @@ class Haystack {
 
 
   /**
+   * Returns an array of matches, or null if no matches are found
    * @param {string} query user-entered query
    * @param {string[]|Object} source data to search
    * @param {number} [limit=1] maximum number of results returned
@@ -120,13 +121,11 @@ class Haystack {
 
 
   /**
+   * Splits a string into tokens based on specified delimiter
    * @param {string} input text to tokenize
    * @param {string} delimiter the points where the split should occur
    */
   tokenize(input, delimiter) {
-    /* -------------------------------------------------------
-      Splits string into tokens based on specified delimiter
-     ------------------------------------------------------- */
     delimiter = (typeof delimiter !== 'undefined') ? delimiter : " ";
     return input.split(delimiter);
   }
@@ -162,15 +161,14 @@ function searchArray(source, query, tokens, options) {
         break;
       }
     }
+    
     if (allTokensFound) {
+      // Exact match
       currentResults.push(source[i]);
     }
-
-    // If flexibility is set, test if this value is within acceptable range:
-    if (options.flexibility > 0) {
-      if (levenshtein(query.toLowerCase(), source[i].toLowerCase()) <= options.flexibility) {
-        currentResults.push(source[i]);
-      }
+    else if ((options.flexibility > 0) && (levenshtein(query.toLowerCase(), source[i].toLowerCase()) <= options.flexibility)) {
+      // Flexibility is set, and this value is within acceptable range
+      currentResults.push(source[i]);
     }
   }
 
@@ -200,13 +198,14 @@ function searchObject(obj, query, tokens, options, currentResults) {
           break;
         }
       }
-      if (allTokensFound) { currentResults.push(value); }
 
-      // If flexibility is set, test if this value is within acceptable range:
-      if (options.flexibility > 0) {
-        if (levenshtein(query.toLowerCase(), value.toLowerCase()) <= options.flexibility) {
-          currentResults.push(value);
-        }
+      if (allTokensFound) {
+        // Exact match
+        currentResults.push(value);
+      }
+      else if ((options.flexibility > 0) && (levenshtein(query.toLowerCase(), value.toLowerCase()) <= options.flexibility)) {
+        // Flexibility is set, and this value is within acceptable range
+        currentResults.push(value);
       }
     }
 

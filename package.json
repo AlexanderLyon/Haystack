@@ -1,10 +1,10 @@
 {
   "name": "haystack-search",
-  "version": "4.3.1",
+  "version": "4.3.2",
   "description": "Search for approximate matches to a query",
   "main": "Haystack.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test.js"
   },
   "repository": {
     "type": "git",
