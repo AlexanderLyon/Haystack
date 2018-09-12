@@ -13,6 +13,7 @@ class Haystack {
       caseSensitive: false,
       flexibility: 2,
       stemming: false,
+      wordnikAPIKey: null,
       exclusions: null,
       ignoreStopWords: false
     }
@@ -70,19 +71,42 @@ class Haystack {
 
 
       if (stemming) {
-        // Removes 's' from the end of words, then rebuilds the query
-        query = "";
-        for (let i=0; i< tokens.length; i++) {
-          let lastChar = tokens[i].substr(tokens[i].length - 1);
-          if (lastChar === 's') {
-            tokens[i] = tokens[i].slice(0, -1);
-          }
-          if (i < tokens.length - 1) {
-            query = query.concat(tokens[i] + " ");
-          } else {
-            query = query.concat(tokens[i]);
+        // Searches words related to query
+        if (this.options.wordnikAPIKey) {
+          for (let i=0; i<tokens.length; i++) {
+            getRelatedWords(tokens[i], this.options.wordnikAPIKey).then(synonyms => {
+              synonyms.forEach(word => {
+                let stemmingResults;
+                switch (sourceDataType) {
+                  case 'array':
+                  case 'string':
+                    stemmingResults = searchArray(source, word, word, {
+                      caseSensitive: caseSensitive,
+                      flexibility: 0
+                    });
+                    break;
+                  case 'object':
+                    stemmingResults = searchObject(source, word, word, {
+                      caseSensitive: caseSensitive,
+                      flexibility: 0
+                    });
+                    break;
+                }
+                if (stemmingResults.length > 0) {
+                  for (let i=0; i<stemmingResults.length; i++) {
+                    results.push(stemmingResults[i]);
+                  }
+                }
+              });
+            }).catch(err => {
+              console.error("Unable to search related words");
+            });
           }
         }
+        else {
+          console.error("Please supply a Wordnik API key to use stemming functionality");
+        }
+
       }
 
 
@@ -161,7 +185,7 @@ function searchArray(source, query, tokens, options) {
         break;
       }
     }
-    
+
     if (allTokensFound) {
       // Exact match
       currentResults.push(source[i]);
@@ -212,6 +236,40 @@ function searchObject(obj, query, tokens, options, currentResults) {
   }
 
   return currentResults;
+}
+
+
+function getRelatedWords(word, apiKey) {
+  /* Returns 5 synonyms for chosen word */
+  return new Promise((resolve, reject) => {
+    const http = require('https');
+
+    http.get('https://api.wordnik.com/v4/word.json/' + word + '/relatedWords?useCanonical=false&limitPerRelationshipType=5&api_key=' + apiKey, resp => {
+      let data = '';
+
+      resp.on('data', chunk => {
+        data += chunk;
+      });
+
+      resp.on('end', () => {
+        result = JSON.parse(data);
+        if (result.length) {
+          result.forEach(i => {
+            if (i.relationshipType == "synonym") {
+              resolve(i.words);
+            }
+          });
+          reject("No related words found for \"" + word + "\"");
+        }
+        else {
+          reject();
+        }
+
+      });
+
+    });
+  });
+
 }
 
 
