@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.3.2
+ * Version 4.4.0
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -35,111 +35,81 @@ class Haystack {
    * @param {number} [limit=1] maximum number of results returned
    */
   search(query, source, limit) {
-    /* -------------------------------------------------------
-      Returns an array of matches, or null if no matches are found
-      The accuracy of these results is determined by the value set for 'flexibility'
-      The maximum results returned is determined by the optional 'limit' parameter
-     ------------------------------------------------------- */
-    limit = (typeof limit !== 'undefined') ? limit : 1;
-    const caseSensitive = this.options.caseSensitive;
-    const stemming = this.options.stemming;
-    const exclusions = this.options.exclusions;
-    const ignoreStopWords = this.options.ignoreStopWords;
-    const sourceDataType = getDataType(source);
-    source = (sourceDataType === 'string') ? this.tokenize(source) : source;
-    let results = [];
-    let tokens;
+    return new Promise( (resolve, reject) => {
+      limit = (typeof limit !== 'undefined') ? limit : 1;
+      const caseSensitive = this.options.caseSensitive;
+      const stemming = this.options.stemming;
+      const exclusions = this.options.exclusions;
+      const ignoreStopWords = this.options.ignoreStopWords;
+      const sourceDataType = getDataType(source);
+      source = (sourceDataType === 'string') ? this.tokenize(source) : source;
+      let results = [];
+      let tokens;
+      let that = this;
 
-    if (query != "") {
-      /* Prepare query */
+      if (query != "") {
 
-      if (ignoreStopWords) {
-        query = removeStopWords(query);
-      }
+        /* Prepare query */
+        if (ignoreStopWords) {
+          query = removeStopWords(query);
+        }
+        if (exclusions) {
+          query = query.replace(exclusions, "");
+        }
 
-      if (exclusions) {
-        query = query.replace(exclusions, "");
-      }
+        // Perform stemming, or continue:
+        checkForStemming(query, this.options).then( queryList => {
 
-      if (caseSensitive) {
-        query = query.trim();
-        tokens = this.tokenize(query);
-      } else {
-        query = query.trim().toLowerCase();
-        tokens = this.tokenize(query);
-      }
+          queryList.forEach( thisQuery => {
+            // Search using each possible query branch
+            console.log("Searching for: '" + thisQuery + "'...");
 
+            if (caseSensitive) {
+              thisQuery = thisQuery.trim();
+              tokens = that.tokenize(thisQuery);
+            } else {
+              thisQuery = thisQuery.trim().toLowerCase();
+              tokens = this.tokenize(thisQuery);
+            }
 
-      if (stemming) {
-        // Searches words related to query
-        if (this.options.wordnikAPIKey) {
-          for (let i=0; i<tokens.length; i++) {
-            getRelatedWords(tokens[i], this.options.wordnikAPIKey).then(synonyms => {
-              synonyms.forEach(word => {
-                let stemmingResults;
-                switch (sourceDataType) {
-                  case 'array':
-                  case 'string':
-                    stemmingResults = searchArray(source, word, word, {
-                      caseSensitive: caseSensitive,
-                      flexibility: 0
-                    });
-                    break;
-                  case 'object':
-                    stemmingResults = searchObject(source, word, word, {
-                      caseSensitive: caseSensitive,
-                      flexibility: 0
-                    });
-                    break;
-                }
-                if (stemmingResults.length > 0) {
-                  for (let i=0; i<stemmingResults.length; i++) {
-                    results.push(stemmingResults[i]);
-                  }
-                }
-              });
-            }).catch(err => {
-              console.error("Unable to search related words");
-            });
+            /* Search */
+            let searchResults;
+            switch (sourceDataType) {
+              case 'array':
+              case 'string':
+                searchResults = searchArray(source, thisQuery, tokens, this.options);
+                break;
+              case 'object':
+                searchResults = searchObject(source, thisQuery, tokens, this.options);
+                break;
+            }
+
+            if (searchResults.length > 0) {
+              for (let i=0; i<searchResults.length; i++) {
+                results.push(searchResults[i]);
+              }
+            }
+          });
+        })
+        .then( () => {
+          // Sort and return either the results array, or null:
+          if (results == "") {
+            resolve(null);
+          } else {
+            resolve( sortResults( createUniqueArray(results), query ).slice(0, limit) );
           }
-        }
-        else {
-          console.error("Please supply a Wordnik API key to use stemming functionality");
-        }
+        })
+        .catch( err => {
+          console.error(err);
+        });
 
       }
-
-
-      /* Search */
-      let searchResults;
-      switch (sourceDataType) {
-        case 'array':
-        case 'string':
-          searchResults = searchArray(source, query, tokens, this.options);
-          break;
-        case 'object':
-          searchResults = searchObject(source, query, tokens, this.options);
-          break;
+      else {
+        // No query present
+        resolve(null);
       }
 
-      if (searchResults.length > 0) {
-        for (let i=0; i<searchResults.length; i++) {
-          results.push(searchResults[i]);
-        }
-      }
-
-      // Sort and return either the results array, or null:
-      if (results == "") {
-        return null;
-      } else {
-        return sortResults( createUniqueArray(results), query ).slice(0, limit);
-      }
-
-    }
-    else {
-      // No query present
-      return null;
-    }
+    });
   }
 
 
@@ -236,6 +206,40 @@ function searchObject(obj, query, tokens, options, currentResults) {
   }
 
   return currentResults;
+}
+
+
+function checkForStemming(query, options) {
+  return new Promise( (resolve, reject) => {
+    let queryList = [query]; // A list of possible query branches
+
+    if (options.stemming) {
+      // Searches words related to query
+      if (options.wordnikAPIKey) {
+        let tempTokens = query.split(" ");
+        for (let i=0; i<tempTokens.length; i++) {
+          getRelatedWords(tempTokens[i], options.wordnikAPIKey).then( synonyms => {
+            for (let j=0; j<synonyms.length; j++) {
+              let newTokens = tempTokens;
+              newTokens[i] = synonyms[j];
+              let altPhrase = newTokens.join(" ");
+              queryList.push(altPhrase);
+            }
+          }).catch( err => {
+            reject("Unable to search related words");
+          });
+        }
+        resolve(queryList);
+      }
+      else {
+        reject("Please supply a Wordnik API key to use stemming functionality");
+      }
+    }
+    else {
+      // Skip stemming
+      resolve(queryList);
+    }
+  });
 }
 
 
