@@ -29,7 +29,7 @@ class Haystack {
 
 
   /**
-   * Returns an array of matches, or null if no matches are found
+   * Returns a promise that resolves with an array of matches, or null if no matches are found
    * @param {string} query user-entered query
    * @param {string[]|Object} source data to search
    * @param {number} [limit=1] maximum number of results returned
@@ -62,7 +62,7 @@ class Haystack {
 
           queryList.forEach( thisQuery => {
             // Search using each possible query branch
-            console.log("Searching for: '" + thisQuery + "'...");
+            //console.log("Searching for: '" + thisQuery + "'");
 
             if (caseSensitive) {
               thisQuery = thisQuery.trim();
@@ -214,27 +214,34 @@ function checkForStemming(query, options) {
     let queryList = [query]; // A list of possible query branches
 
     if (options.stemming) {
-      // Searches words related to query
       if (options.wordnikAPIKey) {
+        let promises = [];
         let tempTokens = query.split(" ");
         for (let i=0; i<tempTokens.length; i++) {
-          getRelatedWords(tempTokens[i], options.wordnikAPIKey).then( synonyms => {
+          let getWords = getRelatedWords(tempTokens[i], options.wordnikAPIKey).then( synonyms => {
             for (let j=0; j<synonyms.length; j++) {
               let newTokens = tempTokens;
               newTokens[i] = synonyms[j];
-              let altPhrase = newTokens.join(" ");
-              queryList.push(altPhrase);
+              queryList.push(newTokens.join(" "));
             }
           }).catch( err => {
-            reject("Unable to search related words");
+            //console.error("Unable to search for related words");
+            resolve(queryList);
           });
+
+          promises.push(getWords);
         }
-        resolve(queryList);
+
+        Promise.all(promises).then(() => {
+          resolve(queryList);
+        });
+
       }
       else {
         reject("Please supply a Wordnik API key to use stemming functionality");
       }
     }
+
     else {
       // Skip stemming
       resolve(queryList);
