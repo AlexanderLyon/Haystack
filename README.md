@@ -29,7 +29,9 @@ const haystack = new Haystack(options);
 
 `ignoreStopWords` *boolean* -- Ignore common stop words such as the, a, in, etc.
 
-`stemming` *boolean* -- Experimental, only removes "s" from end of words for now
+`stemming` *boolean* -- Experimental, requires a valid Wordnik API key
+
+`wordnikAPIKey` *string* Wordnik API key used for stemming functionality
 
 
 ## Methods
@@ -37,7 +39,7 @@ const haystack = new Haystack(options);
 haystack.search(searchTerm, source, [limit]);
 ```
 
-Returns either an array of matches within your `flexibility` range, or `null` if there are no matches. If no limit is given, the default number of results will be 1.
+Returns a promise that resolves to either an array of matches within your `flexibility` range, or `null` if there are no matches. If no limit is given, the default number of results will be 1.
 
 ```javascript
 haystack.tokenize(searchTerm, [delimiter]);

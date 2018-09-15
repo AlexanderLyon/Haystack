@@ -218,11 +218,13 @@ function checkForStemming(query, options) {
         let promises = [];
         let tempTokens = query.split(" ");
         for (let i=0; i<tempTokens.length; i++) {
-          let getWords = getRelatedWords(tempTokens[i], options.wordnikAPIKey).then( synonyms => {
-            for (let j=0; j<synonyms.length; j++) {
-              let newTokens = tempTokens;
-              newTokens[i] = synonyms[j];
-              queryList.push(newTokens.join(" "));
+          let getWords = getRelatedWords(tempTokens[i], options.wordnikAPIKey).then( relatedWords => {
+            if (relatedWords.length) {
+              for (let j=0; j<relatedWords.length; j++) {
+                let newTokens = tempTokens;
+                newTokens[i] = relatedWords[j];
+                queryList.push(newTokens.join(" "));
+              }
             }
           }).catch( err => {
             //console.error("Unable to search for related words");
@@ -251,7 +253,7 @@ function checkForStemming(query, options) {
 
 
 function getRelatedWords(word, apiKey) {
-  /* Returns 5 synonyms for chosen word */
+  /* Returns 5 relatedWords for chosen word */
   return new Promise((resolve, reject) => {
     const http = require('https');
 
@@ -265,12 +267,17 @@ function getRelatedWords(word, apiKey) {
       resp.on('end', () => {
         result = JSON.parse(data);
         if (result.length) {
+          let relatedWords = [];
           result.forEach(i => {
-            if (i.relationshipType == "synonym") {
-              resolve(i.words);
+            switch (i.relationshipType) {
+              case "variant":
+              case "verb-form":
+              case "same-context":
+                relatedWords = relatedWords.concat(i.words);
+                break;
             }
           });
-          reject("No related words found for \"" + word + "\"");
+          resolve(relatedWords);
         }
         else {
           reject();
