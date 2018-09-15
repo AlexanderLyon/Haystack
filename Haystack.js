@@ -217,6 +217,7 @@ function checkForStemming(query, options) {
       if (options.wordnikAPIKey) {
         let promises = [];
         let tempTokens = query.split(" ");
+
         for (let i=0; i<tempTokens.length; i++) {
           let getWords = getRelatedWords(tempTokens[i], options.wordnikAPIKey).then( relatedWords => {
             if (relatedWords.length) {
@@ -227,7 +228,6 @@ function checkForStemming(query, options) {
               }
             }
           }).catch( err => {
-            //console.error("Unable to search for related words");
             resolve(queryList);
           });
 
@@ -240,7 +240,8 @@ function checkForStemming(query, options) {
 
       }
       else {
-        reject("Please supply a Wordnik API key to use stemming functionality");
+        console.error("Please supply a Wordnik API key to use stemming functionality");
+        resolve(queryList);
       }
     }
 
@@ -252,6 +253,11 @@ function checkForStemming(query, options) {
 }
 
 
+/**
+ * Uses Wordnik API to fetch similar words
+ * @param {string} word original word
+ * @param {string} apiKey Wordnik API key
+ */
 function getRelatedWords(word, apiKey) {
   /* Returns 5 relatedWords for chosen word */
   return new Promise((resolve, reject) => {
@@ -291,6 +297,11 @@ function getRelatedWords(word, apiKey) {
 }
 
 
+/**
+ * Returns numeric Levenshtein distance between two strings
+ * @param {string} word1 first word
+ * @param {string} word2 second word
+ */
 function levenshtein(word1, word2) {
   /* Returns numeric Levenshtein distance between two strings */
   let cost = new Array(),

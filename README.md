@@ -2,7 +2,9 @@
 [![npm](https://img.shields.io/npm/v/haystack-search.svg?style=flat-square)](https://www.npmjs.com/package/haystack-search)
 
 ## Overview
-Haystack is a lightweight search / suggestion module that doesn't require any dependencies. Just provide a way for your users to enter their query and the source data to search (as an array, object, or string), and Haystack will return a list of approximate matches. The lower the `flexibility` the more strict your matches will be.
+Haystack is a lightweight search / suggestion module that can be used to find similar matches to a word. Just provide a way for your users to enter their query and the source data to search (as an array, object, or string), and Haystack will return a list of approximate matches. The lower the `flexibility` the more strict your matches will be.
+
+Version 4.4.0 introduces Wordnik integration for stemming. One you've [signed up for an API key](https://developer.wordnik.com/ "API key") and added it to your Haystack options, this feature will become available to use. Remember to keep your API key private at all times!
 
 **For an easy to implement UI version which includes a pre-built search field and suggestion dropdown, see [Haystack UI](https://github.com/AlexanderLyon/Haystack-UI "Haystack UI")**
 
@@ -45,7 +47,7 @@ Returns a promise that resolves to either an array of matches within your `flexi
 haystack.tokenize(searchTerm, [delimiter]);
 ```
 
-By default this splits on whitespaces, but you can define a custom delimiter to use instead.
+Returns an array of tokens. By default this splits on whitespaces, but you can define a custom delimiter to use instead.
 
 ## Contributions
 
