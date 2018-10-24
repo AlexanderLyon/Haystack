@@ -4,8 +4,6 @@
 ## Overview
 Haystack is a lightweight search / suggestion module that can be used to find similar matches to a word. Just provide a way for your users to enter their query and the source data to search (as an array, object, or string), and Haystack will return a list of approximate matches. The lower the `flexibility` the more strict your matches will be.
 
-Version 4.4.0 introduces Wordnik integration for stemming. One you've [signed up for an API key](https://developer.wordnik.com/ "API key") and added it to your Haystack options, this feature will become available to use. Remember to keep your API key private at all times!
-
 **For an easy to implement UI version which includes a pre-built search field and suggestion dropdown, see [Haystack UI](https://github.com/AlexanderLyon/Haystack-UI "Haystack UI")**
 
 ## Installation
@@ -31,9 +29,7 @@ const haystack = new Haystack(options);
 
 `ignoreStopWords` *boolean* -- Ignore common stop words such as the, a, in, etc.
 
-`stemming` *boolean* -- Experimental, requires a valid Wordnik API key
-
-`wordnikAPIKey` *string* Wordnik API key used for stemming functionality
+`stemming` *boolean* -- Experimental, only removes "s" from end of words for now
 
 
 ## Methods
@@ -41,7 +37,7 @@ const haystack = new Haystack(options);
 haystack.search(searchTerm, source, [limit]);
 ```
 
-Returns a promise that resolves to either an array of matches within your `flexibility` range, or `null` if there are no matches. If no limit is given, the default number of results will be 1.
+Returns either an array of matches within your `flexibility` range, or `null` if there are no matches. If no limit is given, the default number of results will be 1.
 
 ```javascript
 haystack.tokenize(searchTerm, [delimiter]);

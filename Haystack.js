@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.4.0
+ * Version 4.3.3
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -13,7 +13,6 @@ class Haystack {
       caseSensitive: false,
       flexibility: 2,
       stemming: false,
-      wordnikAPIKey: null,
       exclusions: null,
       ignoreStopWords: false
     };
@@ -30,84 +29,88 @@ class Haystack {
 
 
   /**
-   * Returns a promise that resolves with an array of matches, or null if no matches are found
+   * Returns an array of matches, or null if no matches are found
    * @param {string} query user-entered query
    * @param {string[]|Object} source data to search
    * @param {number} [limit=1] maximum number of results returned
-   * @return {Promise} promise object resolving to an array of matches or null
+   * @return {Array} Sorted array of matches
    */
   search(query, source, limit) {
-    return new Promise( (resolve, reject) => {
-      limit = (typeof limit !== 'undefined') ? limit : 1;
-      const caseSensitive = this.options.caseSensitive;
-      const exclusions = this.options.exclusions;
-      const ignoreStopWords = this.options.ignoreStopWords;
-      const sourceDataType = getDataType(source);
-      source = (sourceDataType === 'string') ? this.tokenize(source) : source;
-      let results = [];
-      let tokens;
-      let that = this;
+    limit = (typeof limit !== 'undefined') ? limit : 1;
+    const caseSensitive = this.options.caseSensitive;
+    const stemming = this.options.stemming;
+    const exclusions = this.options.exclusions;
+    const ignoreStopWords = this.options.ignoreStopWords;
+    const sourceDataType = getDataType(source);
+    source = (sourceDataType === 'string') ? this.tokenize(source) : source;
+    let results = [];
+    let tokens;
 
-      if (query != '') {
-        /* Prepare query */
-        if (ignoreStopWords) {
-          query = removeStopWords(query);
-        }
+    if (query != '') {
+      /* Prepare query */
+      if (ignoreStopWords) {
+        query = removeStopWords(query);
+      }
 
-        if (exclusions) {
-          query = query.replace(exclusions, '');
-        }
+      if (exclusions) {
+        query = query.replace(exclusions, '');
+      }
 
-        // Perform stemming, or continue:
-        checkForStemming(query, this.options).then( (queryList) => {
-          queryList.forEach( (thisQuery) => {
-            // Search using each possible query branch
-            // console.log("Searching for: '" + thisQuery + "'");
-
-            if (caseSensitive) {
-              thisQuery = thisQuery.trim();
-              tokens = that.tokenize(thisQuery);
-            }
-            else {
-              thisQuery = thisQuery.trim().toLowerCase();
-              tokens = this.tokenize(thisQuery);
-            }
-
-            /* Search */
-            let searchResults;
-            switch (sourceDataType) {
-              case 'array':
-              case 'string':
-                searchResults = searchArray(source, thisQuery, tokens, this.options);
-                break;
-              case 'object':
-                searchResults = searchObject(source, thisQuery, tokens, this.options);
-                break;
-            }
-
-            if (searchResults.length > 0) {
-              for (let i=0; i<searchResults.length; i++) {
-                results.push(searchResults[i]);
-              }
-            }
-          });
-        }).then( () => {
-          // Sort and return either the results array, or null:
-          if (results == '') {
-            resolve(null);
-          }
-          else {
-            resolve( sortResults( createUniqueArray(results), query ).slice(0, limit) );
-          }
-        }).catch( (err) => {
-          console.error(err);
-        });
+      if (caseSensitive) {
+        query = query.trim();
+        tokens = this.tokenize(query);
       }
       else {
-        // No query present
-        resolve(null);
+        query = query.trim().toLowerCase();
+        tokens = this.tokenize(query);
       }
-    });
+
+      if (stemming) {
+        // Removes 's' from the end of words, then rebuilds the query
+        query = '';
+        for (let i=0; i< tokens.length; i++) {
+          if (/s$/i.test(tokens[i])) {
+            tokens[i] = tokens[i].slice(0, -1);
+          }
+          if (i < tokens.length - 1) {
+            query = query.concat(tokens[i] + ' ');
+          }
+          else {
+            query = query.concat(tokens[i]);
+          }
+        }
+      }
+
+      /* Search */
+      let searchResults;
+      switch (sourceDataType) {
+        case 'array':
+        case 'string':
+          searchResults = searchArray(source, query, tokens, this.options);
+          break;
+        case 'object':
+          searchResults = searchObject(source, query, tokens, this.options);
+          break;
+      }
+
+      if (searchResults.length > 0) {
+        for (let i=0; i<searchResults.length; i++) {
+          results.push(searchResults[i]);
+        }
+      }
+
+      // Sort and return either the results array, or null:
+      if (results == '') {
+        return null;
+      }
+      else {
+        return sortResults( createUniqueArray(results), query ).slice(0, limit);
+      }
+    }
+    else {
+      // No query present
+      return null;
+    }
   }
 
 
@@ -123,7 +126,6 @@ class Haystack {
     return input.split(delimiter);
   }
 }
-
 
 
 
@@ -205,91 +207,6 @@ function searchObject(obj, query, tokens, options, currentResults) {
   }
 
   return currentResults;
-}
-
-
-function checkForStemming(query, options) {
-  return new Promise( (resolve, reject) => {
-    let queryList = [query]; // A list of possible query branches
-
-    if (options.stemming) {
-      if (options.wordnikAPIKey) {
-        let promises = [];
-        let tempTokens = query.split(' ');
-
-        for (let i=0; i<tempTokens.length; i++) {
-          let getWords = getRelatedWords(tempTokens[i], options.wordnikAPIKey).then( (relatedWords) => {
-            if (relatedWords.length) {
-              for (let j=0; j<relatedWords.length; j++) {
-                let newTokens = tempTokens;
-                newTokens[i] = relatedWords[j];
-                queryList.push(newTokens.join(' '));
-              }
-            }
-          }).catch( (err) => {
-            resolve(queryList);
-          });
-
-          promises.push(getWords);
-        }
-
-        Promise.all(promises).then(() => {
-          resolve(queryList);
-        });
-      }
-      else {
-        console.error('Please supply a Wordnik API key to use stemming functionality');
-        resolve(queryList);
-      }
-    }
-
-    else {
-      // Skip stemming
-      resolve(queryList);
-    }
-  });
-}
-
-
-/**
- * Uses Wordnik API to fetch similar words
- * @param {string} word original word
- * @param {string} apiKey Wordnik API key
- * @return {Promise}
- */
-function getRelatedWords(word, apiKey) {
-  /* Returns 5 relatedWords for chosen word */
-  return new Promise( (resolve, reject) => {
-    const http = require('https');
-
-    http.get('https://api.wordnik.com/v4/word.json/' + word + '/relatedWords?useCanonical=false&limitPerRelationshipType=5&api_key=' + apiKey, (resp) => {
-      let data = '';
-
-      resp.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      resp.on('end', () => {
-        const result = JSON.parse(data);
-        if (result.length) {
-          let relatedWords = [];
-          result.forEach((i) => {
-            switch (i.relationshipType) {
-              case 'variant':
-              case 'verb-form':
-              case 'same-context':
-                relatedWords = relatedWords.concat(i.words);
-                break;
-            }
-          });
-          resolve(relatedWords);
-        }
-        else {
-          reject();
-        }
-      });
-    });
-  });
 }
 
 
@@ -424,7 +341,6 @@ function removeStopWords(query) {
 
   return newQuery.join(' ');
 }
-
 
 
 module.exports = Haystack;
