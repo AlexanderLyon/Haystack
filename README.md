@@ -49,6 +49,11 @@ Returns an array of tokens. By default this splits on whitespaces, but you can d
 
 Contributions and suggestions for improvement are always welcome!
 
+1. Fork this repo (<https://github.com/AlexanderLyon/Haystack/fork>)
+2. Create your new feature branch
+3. Commit changes and push
+4. Create a new Pull Request
+
 ## License
 
-MIT
+[MIT](https://github.com/AlexanderLyon/Haystack/blob/master/README.md "MIT License")
