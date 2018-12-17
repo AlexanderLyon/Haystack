@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.3.3
+ * Version 4.3.4
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -37,49 +37,14 @@ class Haystack {
    */
   search(query, source, limit) {
     limit = (typeof limit !== 'undefined') ? limit : 1;
-    const caseSensitive = this.options.caseSensitive;
-    const stemming = this.options.stemming;
-    const exclusions = this.options.exclusions;
-    const ignoreStopWords = this.options.ignoreStopWords;
     const sourceDataType = getDataType(source);
     source = (sourceDataType === 'string') ? this.tokenize(source) : source;
     let results = [];
     let tokens;
 
     if (query != '') {
-      /* Prepare query */
-      if (ignoreStopWords) {
-        query = removeStopWords(query);
-      }
-
-      if (exclusions) {
-        query = query.replace(exclusions, '');
-      }
-
-      if (caseSensitive) {
-        query = query.trim();
-        tokens = this.tokenize(query);
-      }
-      else {
-        query = query.trim().toLowerCase();
-        tokens = this.tokenize(query);
-      }
-
-      if (stemming) {
-        // Removes 's' from the end of words, then rebuilds the query
-        query = '';
-        for (let i=0; i< tokens.length; i++) {
-          if (/s$/i.test(tokens[i])) {
-            tokens[i] = tokens[i].slice(0, -1);
-          }
-          if (i < tokens.length - 1) {
-            query = query.concat(tokens[i] + ' ');
-          }
-          else {
-            query = query.concat(tokens[i]);
-          }
-        }
-      }
+      query = prepareQuery(query, this.options);
+      tokens = this.tokenize(query);
 
       /* Search */
       let searchResults;
@@ -137,6 +102,45 @@ function extendDefaults(defaults, properties) {
     }
   }
   return defaults;
+}
+
+
+function prepareQuery(query, options) {
+  /* Cleans and formats query based on defined options */
+  if (options.ignoreStopWords) {
+    query = removeStopWords(query);
+  }
+
+  if (options.exclusions) {
+    query = query.replace(options.exclusions, '');
+  }
+
+  if (options.caseSensitive) {
+    query = query.trim();
+    tokens = query.split(' ');
+  }
+  else {
+    query = query.trim().toLowerCase();
+    tokens = query.split(' ');
+  }
+
+  if (options.stemming) {
+    // Removes 's' from the end of words, then rebuilds the query
+    query = '';
+    for (let i=0; i< tokens.length; i++) {
+      if (/s$/i.test(tokens[i])) {
+        tokens[i] = tokens[i].slice(0, -1);
+      }
+      if (i < tokens.length - 1) {
+        query = query.concat(tokens[i] + ' ');
+      }
+      else {
+        query = query.concat(tokens[i]);
+      }
+    }
+  }
+
+  return query;
 }
 
 
