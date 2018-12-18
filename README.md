@@ -56,4 +56,4 @@ Contributions and suggestions for improvement are always welcome!
 
 ## License
 
-[MIT](https://github.com/AlexanderLyon/Haystack/blob/master/README.md "MIT License")
+[MIT](https://github.com/AlexanderLyon/Haystack/blob/master/LICENSE "MIT License")
