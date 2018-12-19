@@ -107,6 +107,8 @@ function extendDefaults(defaults, properties) {
 
 function prepareQuery(query, options) {
   /* Cleans and formats query based on defined options */
+  let tokens;
+
   if (options.ignoreStopWords) {
     query = removeStopWords(query);
   }
