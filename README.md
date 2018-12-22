@@ -29,7 +29,7 @@ const haystack = new Haystack(options);
 
 `ignoreStopWords` *boolean* -- Ignore common stop words such as the, a, in, etc.
 
-`stemming` *boolean* -- Experimental, only removes "s" from end of words for now
+`stemming` *boolean* -- Reduces tokens in a query to their base words
 
 
 ## Methods

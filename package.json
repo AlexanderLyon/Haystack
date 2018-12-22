@@ -1,6 +1,6 @@
 {
   "name": "haystack-search",
-  "version": "4.3.41",
+  "version": "4.4.0",
   "description": "Search for approximate matches to a query",
   "main": "Haystack.js",
   "scripts": {
@@ -23,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/AlexanderLyon/Haystack/issues"
   },
-  "homepage": "https://github.com/AlexanderLyon/Haystack#readme"
+  "homepage": "https://github.com/AlexanderLyon/Haystack#readme",
+  "dependencies": {
+    "lemmatizer": "0.0.1"
+  }
 }

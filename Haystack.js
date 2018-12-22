@@ -1,10 +1,11 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.3.41
+ * Version 4.4.0
  * https://github.com/AlexanderLyon/Haystack
  */
 
+const lem = require('lemmatizer');
 
 class Haystack {
   constructor(...args) {
@@ -127,19 +128,10 @@ function prepareQuery(query, options) {
   }
 
   if (options.stemming) {
-    // Removes 's' from the end of words, then rebuilds the query
-    query = '';
-    for (let i=0; i< tokens.length; i++) {
-      if (/s$/i.test(tokens[i])) {
-        tokens[i] = tokens[i].slice(0, -1);
-      }
-      if (i < tokens.length - 1) {
-        query = query.concat(tokens[i] + ' ');
-      }
-      else {
-        query = query.concat(tokens[i]);
-      }
+    for (let i=0; i<tokens.length; i++) {
+      tokens[i] = lem.lemmatizer(tokens[i]);
     }
+    query = tokens.join(" ");
   }
 
   return query;
