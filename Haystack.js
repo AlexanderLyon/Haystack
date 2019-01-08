@@ -1,11 +1,11 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.4.0
+ * Version 4.4.1
  * https://github.com/AlexanderLyon/Haystack
  */
 
-const lem = require('lemmatizer');
+const stemmer = require('stemmer');
 
 class Haystack {
   constructor(...args) {
@@ -129,7 +129,7 @@ function prepareQuery(query, options) {
 
   if (options.stemming) {
     for (let i=0; i<tokens.length; i++) {
-      tokens[i] = lem.lemmatizer(tokens[i]);
+      tokens[i] = stemmer(tokens[i]);
     }
     query = tokens.join(" ");
   }
