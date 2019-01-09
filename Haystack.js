@@ -1,7 +1,7 @@
 /*
  * Haystack.js
  * By: Alexander Lyon
- * Version 4.4.1
+ * Version 4.4.2
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -37,6 +37,19 @@ class Haystack {
    * @return {Array} Sorted array of matches
    */
   search(query, source, limit) {
+    try {
+      if (typeof query !== 'string') {
+        throw new Error('Invalid search query');
+      }
+      else if ((typeof source === 'undefined') || (typeof source === 'number')) {
+        throw new Error('Invalid source type: ' + typeof source);
+      }
+    }
+    catch (e) {
+      console.error(e);
+      return;
+    }
+
     limit = (typeof limit !== 'undefined') ? limit : 1;
     const sourceDataType = getDataType(source);
     source = (sourceDataType === 'string') ? this.tokenize(source) : source;
