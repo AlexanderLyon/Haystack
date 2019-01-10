@@ -21,15 +21,13 @@ const haystack = new Haystack(options);
 ```
 
 ## Options
-`flexibility` *number* -- "Fuzziness" of search. The lower the number, the more strict your matches will be. (If set to `0`, Haystack will only look for perfect matches)
-
-`caseSensitive` *boolean* -- Whether or not search is case sensitive
-
-`exclusions` *string* -- Add a string or regex to ignore in query
-
-`ignoreStopWords` *boolean* -- Ignore common stop words such as the, a, in, etc.
-
-`stemming` *boolean* -- Reduces tokens in a query to their base words
+| Option      | Default     | Description |
+| ----------- | ----------- | ----------- |
+| `flexibility` (*number*)      | 2       | "Fuzziness" of search. The lower the number, the more strict your matches will be. (If set to `0`, Haystack will only look for perfect matches) |
+| `caseSensitive` (*boolean*)   | false        | Whether or not search is case sensitive |
+| `exclusions` (*string*)   | null        | Add a string or regex to ignore in query |
+| `ignoreStopWords` (*boolean*)   | false        | Ignore common stop words such as the, a, in, etc. |
+| `stemming` (*boolean*)   | false        | Reduces tokens in a query to their base words using [stemmer](https://github.com/words/stemmer "stemmer") |
 
 
 ## Methods
