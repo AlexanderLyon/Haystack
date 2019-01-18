@@ -1,7 +1,7 @@
 /*
  * Haystack.js
- * By: Alexander Lyon
- * Version 4.4.2
+ * By Alexander Lyon
+ * Version 4.4.3
  * https://github.com/AlexanderLyon/Haystack
  */
 
@@ -31,7 +31,7 @@ class Haystack {
 
   /**
    * Returns an array of matches, or null if no matches are found
-   * @param {string} query user-entered query
+   * @param {string} query phrase to search for
    * @param {string[]|Object} source data to search
    * @param {number} [limit=1] maximum number of results returned
    * @return {Array} Sorted array of matches
@@ -108,8 +108,8 @@ class Haystack {
 
 
 
+/** Extends defaults with user options */
 function extendDefaults(defaults, properties) {
-  /* Extends defaults with user options */
   for (let property in properties) {
     if (properties.hasOwnProperty(property)) {
       defaults[property] = properties[property];
@@ -119,8 +119,13 @@ function extendDefaults(defaults, properties) {
 }
 
 
+/**
+ * Cleans and formats query based on defined options
+ * @param {string} query phrase to search for
+ * @param {Object} options user-defined options
+ * @return {string} new query
+ */
 function prepareQuery(query, options) {
-  /* Cleans and formats query based on defined options */
   let tokens;
 
   if (options.ignoreStopWords) {
@@ -144,13 +149,21 @@ function prepareQuery(query, options) {
     for (let i=0; i<tokens.length; i++) {
       tokens[i] = stemmer(tokens[i]);
     }
-    query = tokens.join(" ");
+    query = tokens.join(' ');
   }
 
   return query;
 }
 
 
+/**
+ * Searches an array for token matches
+ * @param {Array} source data to search
+ * @param {string} query phrase to search for
+ * @param {Array} tokens tokenized query
+ * @param {Object} options user-defined options
+ * @return {Array} results
+ */
 function searchArray(source, query, tokens, options) {
   let currentResults = [];
 
@@ -181,8 +194,16 @@ function searchArray(source, query, tokens, options) {
 }
 
 
+/**
+ * Recursively searches an object for token matches
+ * @param {Object} obj data to search
+ * @param {string} query phrase to search for
+ * @param {Array} tokens tokenized query
+ * @param {Object} options user-defined options
+ * @param {Array} currentResults results saved between recursions
+ * @return {Array} results
+ */
 function searchObject(obj, query, tokens, options, currentResults) {
-  /* Recursively searches an object for token matches */
   currentResults = (typeof currentResults !== 'undefined') ? currentResults : [];
 
   for (let key in obj) {
@@ -277,8 +298,8 @@ function levenshtein(word1, word2) {
 }
 
 
+/** Sorts results in ascending order */
 function sortResults(results, query) {
-  /* Sorts results in ascending order */
   let swapped;
   do {
     swapped = false;
@@ -295,8 +316,8 @@ function sortResults(results, query) {
 }
 
 
+/** Removes duplicates from an array */
 function createUniqueArray(arr) {
-  /* Removes duplicates from an array */
   let uniqueArray = arr.filter(function(item, pos) {
     return arr.indexOf(item) == pos;
   });
@@ -304,6 +325,7 @@ function createUniqueArray(arr) {
 }
 
 
+/** Returns a more specific data type */
 function getDataType(source) {
   if (source) {
     if (typeof source === 'object' && source.constructor === Array) {
@@ -322,8 +344,8 @@ function getDataType(source) {
 }
 
 
+/** Removes common stop words from the query */
 function removeStopWords(query) {
-  /* Removes common stop words from the query */
   let words = query.split(' ');
   let newQuery = [];
 
