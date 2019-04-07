@@ -1,7 +1,7 @@
 # Haystack
 [![npm](https://img.shields.io/npm/v/haystack-search.svg?style=flat-square)](https://www.npmjs.com/package/haystack-search)
 
-[![downloads](https://img.shields.io/npm/dt/haystack-search.svg?style=flat-square](https://www.npmjs.com/package/haystack-search)
+[![npm](https://img.shields.io/npm/dt/haystack-search.svg?style=flat-square)](https://www.npmjs.com/package/haystack-search)
 
 ## Overview
 Haystack is a lightweight search / suggestion module that can be used to find similar matches to a word. Just provide a way for your users to enter their query and the source data to search (as an array, object, or string), and Haystack will return a list of approximate matches. The lower the `flexibility` the more strict your matches will be.
