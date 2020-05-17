@@ -6,7 +6,7 @@
 
 const stemmer = require('stemmer');
 
-class Haystack {
+export class Haystack {
   constructor(...args) {
     // Default options:
     const defaults = {
@@ -373,6 +373,3 @@ function removeStopWords(query) {
 
   return newQuery.join(' ');
 }
-
-
-module.exports = Haystack;
