@@ -25,6 +25,6 @@
   },
   "homepage": "https://github.com/AlexanderLyon/Haystack#readme",
   "dependencies": {
-    "stemmer": "^1.0.3"
+    "stemmer": "^1.0.5"
   }
 }
