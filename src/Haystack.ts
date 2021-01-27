@@ -14,19 +14,16 @@ export class Haystack {
       flexibility: 2,
       stemming: false,
       exclusions: null,
-      ignoreStopWords: false
+      ignoreStopWords: false,
     };
 
     // Override defaults with passed in options:
     if (args[0] && typeof args[0] === 'object') {
       this.options = extendDefaults(defaults, args[0]);
-    }
-    else {
+    } else {
       this.options = defaults;
     }
   }
-
-
 
   /**
    * Returns an array of matches, or null if no matches are found
@@ -39,19 +36,17 @@ export class Haystack {
     try {
       if (typeof query !== 'string') {
         throw new Error('Invalid search query');
-      }
-      else if ((typeof source === 'undefined') || (typeof source === 'number')) {
+      } else if (typeof source === 'undefined' || typeof source === 'number') {
         throw new Error('Invalid source type: ' + typeof source);
       }
-    }
-    catch (e) {
+    } catch (e) {
       console.error(e);
       return;
     }
 
-    limit = (typeof limit !== 'undefined') ? limit : 1;
+    limit = typeof limit !== 'undefined' ? limit : 1;
     const sourceDataType = getDataType(source);
-    source = (sourceDataType === 'string') ? this.tokenize(source) : source;
+    source = sourceDataType === 'string' ? this.tokenize(source) : source;
     let results = [];
     let tokens;
 
@@ -72,7 +67,7 @@ export class Haystack {
       }
 
       if (searchResults.length > 0) {
-        for (let i=0; i<searchResults.length; i++) {
+        for (let i = 0; i < searchResults.length; i++) {
           results.push(searchResults[i]);
         }
       }
@@ -80,18 +75,14 @@ export class Haystack {
       // Sort and return either the results array, or null:
       if (results == '') {
         return null;
+      } else {
+        return sortResults(createUniqueArray(results), query).slice(0, limit);
       }
-      else {
-        return sortResults( createUniqueArray(results), query ).slice(0, limit);
-      }
-    }
-    else {
+    } else {
       // No query present
       return null;
     }
   }
-
-
 
   /**
    * Splits a string into tokens based on specified delimiter
@@ -100,12 +91,10 @@ export class Haystack {
    * @return {Array} array of tokens
    */
   tokenize(input, delimiter) {
-    delimiter = (typeof delimiter !== 'undefined') ? delimiter : ' ';
+    delimiter = typeof delimiter !== 'undefined' ? delimiter : ' ';
     return input.split(delimiter);
   }
 }
-
-
 
 /** Extends defaults with user options */
 function extendDefaults(defaults, properties) {
@@ -116,7 +105,6 @@ function extendDefaults(defaults, properties) {
   }
   return defaults;
 }
-
 
 /**
  * Cleans and formats query based on defined options
@@ -138,14 +126,13 @@ function prepareQuery(query, options) {
   if (options.caseSensitive) {
     query = query.trim();
     tokens = query.split(' ');
-  }
-  else {
+  } else {
     query = query.trim().toLowerCase();
     tokens = query.split(' ');
   }
 
   if (options.stemming) {
-    for (let i=0; i<tokens.length; i++) {
+    for (let i = 0; i < tokens.length; i++) {
       tokens[i] = stemmer(tokens[i]);
     }
     query = tokens.join(' ');
@@ -153,7 +140,6 @@ function prepareQuery(query, options) {
 
   return query;
 }
-
 
 /**
  * Searches an array for token matches
@@ -166,13 +152,13 @@ function prepareQuery(query, options) {
 function searchArray(source, query, tokens, options) {
   let currentResults = [];
 
-  for (let i=0; i<source.length; i++) {
+  for (let i = 0; i < source.length; i++) {
     // Make sure value is a string:
     source[i] = options.caseSensitive ? String(source[i]) : String(source[i]).toLowerCase();
 
     // Test if every token is found:
     let allTokensFound = true;
-    for (let j=0; j<tokens.length; j++) {
+    for (let j = 0; j < tokens.length; j++) {
       if (source[i].indexOf(tokens[j]) === -1) {
         allTokensFound = false;
         break;
@@ -182,8 +168,10 @@ function searchArray(source, query, tokens, options) {
     if (allTokensFound) {
       // Exact match
       currentResults.push(source[i]);
-    }
-    else if ((options.flexibility > 0) && (levenshtein(query.toLowerCase(), source[i].toLowerCase()) <= options.flexibility)) {
+    } else if (
+      options.flexibility > 0 &&
+      levenshtein(query.toLowerCase(), source[i].toLowerCase()) <= options.flexibility
+    ) {
       // Flexibility is set, and this value is within acceptable range
       currentResults.push(source[i]);
     }
@@ -191,7 +179,6 @@ function searchArray(source, query, tokens, options) {
 
   return currentResults;
 }
-
 
 /**
  * Recursively searches an object for token matches
@@ -203,7 +190,7 @@ function searchArray(source, query, tokens, options) {
  * @return {Array} results
  */
 function searchObject(obj, query, tokens, options, currentResults) {
-  currentResults = (typeof currentResults !== 'undefined') ? currentResults : [];
+  currentResults = typeof currentResults !== 'undefined' ? currentResults : [];
 
   for (let key in obj) {
     if (obj.hasOwnProperty(key)) {
@@ -211,14 +198,13 @@ function searchObject(obj, query, tokens, options, currentResults) {
 
       if (getDataType(value) === 'object') {
         currentResults = searchObject(value, query, tokens, options, currentResults);
-      }
-      else {
+      } else {
         // Make sure value is a string:
         value = options.caseSensitive ? String(value) : String(value).toLowerCase();
 
         // Test if every token is found:
         let allTokensFound = true;
-        for (let i=0; i<tokens.length; i++) {
+        for (let i = 0; i < tokens.length; i++) {
           if (value.indexOf(tokens[i]) === -1) {
             allTokensFound = false;
             break;
@@ -228,8 +214,10 @@ function searchObject(obj, query, tokens, options, currentResults) {
         if (allTokensFound) {
           // Exact match
           currentResults.push(value);
-        }
-        else if ((options.flexibility > 0) && (levenshtein(query.toLowerCase(), value.toLowerCase()) <= options.flexibility)) {
+        } else if (
+          options.flexibility > 0 &&
+          levenshtein(query.toLowerCase(), value.toLowerCase()) <= options.flexibility
+        ) {
           // Flexibility is set, and this value is within acceptable range
           currentResults.push(value);
         }
@@ -239,7 +227,6 @@ function searchObject(obj, query, tokens, options, currentResults) {
 
   return currentResults;
 }
-
 
 /**
  * Returns numeric Levenshtein distance between two strings
@@ -256,7 +243,7 @@ function levenshtein(word1, word2) {
   let m = word1.length;
   let i;
   let j;
-  let minimum = function(a, b, c) {
+  let minimum = function (a, b, c) {
     let min = a;
     if (b < min) {
       min = b;
@@ -287,8 +274,7 @@ function levenshtein(word1, word2) {
       let y = str2.charAt(j - 1);
       if (x == y) {
         cost[i][j] = cost[i - 1][j - 1];
-      }
-      else {
+      } else {
         cost[i][j] = 1 + minimum(cost[i - 1][j - 1], cost[i][j - 1], cost[i - 1][j]);
       }
     }
@@ -296,17 +282,16 @@ function levenshtein(word1, word2) {
   return cost[n][m];
 }
 
-
 /** Sorts results in ascending order */
 function sortResults(results, query) {
   let swapped;
   do {
     swapped = false;
     for (let i = 0; i < results.length; i++) {
-      if (results[i] && results[i+1] && levenshtein(query, results[i]) > levenshtein(query, results[i+1])) {
+      if (results[i] && results[i + 1] && levenshtein(query, results[i]) > levenshtein(query, results[i + 1])) {
         let temp = results[i];
-        results[i] = results[i+1];
-        results[i+1] = temp;
+        results[i] = results[i + 1];
+        results[i + 1] = temp;
         swapped = true;
       }
     }
@@ -314,34 +299,28 @@ function sortResults(results, query) {
   return results;
 }
 
-
 /** Removes duplicates from an array */
 function createUniqueArray(arr) {
-  let uniqueArray = arr.filter(function(item, pos) {
+  let uniqueArray = arr.filter(function (item, pos) {
     return arr.indexOf(item) == pos;
   });
   return uniqueArray;
 }
-
 
 /** Returns a more specific data type */
 function getDataType(source) {
   if (source) {
     if (typeof source === 'object' && source.constructor === Array) {
       return 'array';
-    }
-    else if (typeof source === 'object' && source.constructor === Object) {
+    } else if (typeof source === 'object' && source.constructor === Object) {
       return 'object';
-    }
-    else if (typeof source === 'string' && source.constructor === String) {
+    } else if (typeof source === 'string' && source.constructor === String) {
       return 'string';
     }
-  }
-  else {
+  } else {
     return null;
   }
 }
-
 
 /** Removes common stop words from the query */
 function removeStopWords(query) {
@@ -349,7 +328,7 @@ function removeStopWords(query) {
   let newQuery = [];
 
   // Mark stop word tokens as 'undefined'
-  for (let i=0; i<words.length; i++) {
+  for (let i = 0; i < words.length; i++) {
     switch (words[i].toLowerCase()) {
       case 'the':
       case 'a':
@@ -365,7 +344,7 @@ function removeStopWords(query) {
   }
 
   // Only move elements that are defined to 'newQuery' array
-  for (let i=0; i<words.length; i++) {
+  for (let i = 0; i < words.length; i++) {
     if (words[i] != undefined) {
       newQuery.push(words[i]);
     }
