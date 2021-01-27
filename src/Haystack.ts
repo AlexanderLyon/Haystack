@@ -32,7 +32,7 @@ export class Haystack {
    * @param {number} [limit=1] maximum number of results returned
    * @return {Array} Sorted array of matches
    */
-  search(query, source, limit) {
+  search(query, source, limit = 1) {
     try {
       if (typeof query !== 'string') {
         throw new Error('Invalid search query');
@@ -44,7 +44,6 @@ export class Haystack {
       return;
     }
 
-    limit = typeof limit !== 'undefined' ? limit : 1;
     const sourceDataType = getDataType(source);
     source = sourceDataType === 'string' ? this.tokenize(source) : source;
     let results = [];
@@ -90,8 +89,7 @@ export class Haystack {
    * @param {string} delimiter the points where the split should occur
    * @return {Array} array of tokens
    */
-  tokenize(input, delimiter) {
-    delimiter = typeof delimiter !== 'undefined' ? delimiter : ' ';
+  tokenize(input, delimiter = ' ') {
     return input.split(delimiter);
   }
 }
@@ -189,9 +187,7 @@ function searchArray(source, query, tokens, options) {
  * @param {Array} currentResults results saved between recursions
  * @return {Array} results
  */
-function searchObject(obj, query, tokens, options, currentResults) {
-  currentResults = typeof currentResults !== 'undefined' ? currentResults : [];
-
+function searchObject(obj, query, tokens, options, currentResults = []) {
   for (let key in obj) {
     if (obj.hasOwnProperty(key)) {
       let value = obj[key];
