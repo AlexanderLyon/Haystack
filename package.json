@@ -4,6 +4,8 @@
   "description": "Search for approximate matches to a query",
   "main": "Haystack.js",
   "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
     "test": "node test.js"
   },
   "repository": {
@@ -26,5 +28,8 @@
   "homepage": "https://github.com/AlexanderLyon/Haystack#readme",
   "dependencies": {
     "stemmer": "^1.0.5"
+  },
+  "devDependencies": {
+    "typescript": "^4.1.3"
   }
 }
