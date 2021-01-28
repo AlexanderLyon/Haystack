@@ -16,7 +16,7 @@ interface IOptions {
 
 type SearchPool = string[] | object;
 
-export class Haystack {
+class Haystack {
   private options: IOptions;
 
   constructor(...args: any[]) {
@@ -322,3 +322,5 @@ function removeStopWords(query: string): string {
   const words: string[] = query.split(' ').filter((word) => !stopWords.includes(word));
   return words.join(' ');
 }
+
+module.exports = Haystack;
