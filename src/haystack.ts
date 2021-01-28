@@ -44,7 +44,7 @@ class Haystack {
    * @param {number} [limit=1] maximum number of results returned
    * @return {Array} Sorted array of matches
    */
-  search(query: string, source: SearchPool, limit: number = 1): string[] {
+  public search(query: string, source: SearchPool, limit: number = 1): string[] {
     const results: string[] = [];
     const sourceDataType = getDataType(source);
 
@@ -84,7 +84,7 @@ class Haystack {
    * @param {string} delimiter the points where the split should occur
    * @return {Array} array of tokens
    */
-  tokenize(input: string, delimiter: string = ' '): string[] {
+  public tokenize(input: string, delimiter: string = ' '): string[] {
     return input.split(delimiter);
   }
 }
