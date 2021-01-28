@@ -1,42 +1,47 @@
 # Haystack
+
 [![npm](https://img.shields.io/npm/v/haystack-search.svg?style=flat-square)](https://www.npmjs.com/package/haystack-search)
 [![npm](https://img.shields.io/npm/dt/haystack-search.svg?style=flat-square)](https://www.npmjs.com/package/haystack-search)
 
 ## Overview
-Haystack is a lightweight search / suggestion module that can be used to find similar matches to a word. Just provide the source data to search (as an array, object, or string), and Haystack will return a list of approximate matches. The lower the `flexibility` the more strict your matches will be.
 
-**For the UI React component version which includes a pre-built search field and suggestion dropdown, see [Haystack UI](https://github.com/AlexanderLyon/Haystack-UI "Haystack UI")**
+Haystack is a lightweight search / suggestion library that can be used to find similar matches to a word. Just provide the source data to search against (as an array or object), and Haystack will return a list of approximate matches. The lower the `flexibility` the more strict your matches will be.
 
 ## Installation
+
 Using npm:
+
 ```shell
 npm i haystack-search
 ```
 
 Import Haystack into your project:
+
 ```javascript
 import { Haystack } from 'haystack-search';
 ```
+
 ```javascript
 const haystack = new Haystack(options);
 ```
 
 ## Options
-| Option      | Default     | Description |
-| ----------- | ----------- | ----------- |
-| `flexibility` (*number*)      | 2       | "Fuzziness" of search. The lower the number, the more strict your matches will be. (If set to `0`, Haystack will only look for perfect matches) |
-| `caseSensitive` (*boolean*)   | false        | Whether or not search is case sensitive |
-| `exclusions` (*string*)   | null        | Add a string or regex to ignore in query |
-| `ignoreStopWords` (*boolean*)   | false        | Ignore common stop words such as the, a, in, etc. |
-| `stemming` (*boolean*)   | false        | Reduces tokens in a query to their base words using [stemmer](https://github.com/words/stemmer "stemmer") |
 
+| Option                        | Default | Description                                                                                                                                     |
+| ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flexibility` (_number_)      | 2       | "Fuzziness" of search. The lower the number, the more strict your matches will be. (If set to `0`, Haystack will only look for perfect matches) |
+| `caseSensitive` (_boolean_)   | false   | Whether or not search is case sensitive                                                                                                         |
+| `exclusions` (_array_)        | []      | An array of strings or regexes to ignore in query                                                                                               |
+| `ignoreStopWords` (_boolean_) | false   | Ignore common stop words such as the, a, in, etc.                                                                                               |
+| `stemming` (_boolean_)        | false   | Reduces tokens in a query to their base words using [stemmer](https://github.com/words/stemmer 'stemmer')                                       |
 
 ## Methods
+
 ```javascript
 haystack.search(searchTerm, source, [limit]);
 ```
 
-Returns either an array of matches within your `flexibility` range, or `null` if there are no matches. If no limit is given, the default number of results will be 1.
+Returns an array of matches within your `flexibility` range. If no limit is given, the default number of results will be 1.
 
 ```javascript
 haystack.tokenize(searchTerm, [delimiter]);
@@ -55,4 +60,4 @@ Contributions and suggestions for improvement are always welcome!
 
 ## License
 
-[MIT](https://github.com/AlexanderLyon/Haystack/blob/master/LICENSE "MIT License")
+[MIT](https://github.com/AlexanderLyon/Haystack/blob/master/LICENSE 'MIT License')

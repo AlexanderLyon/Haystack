@@ -1,10 +1,16 @@
 {
   "name": "haystack-search",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "description": "Search for approximate matches to a query",
-  "main": "Haystack.js",
+  "main": "dist/haystack.js",
+  "files": [
+    "dist/haystack.js"
+  ],
   "scripts": {
-    "test": "node test.js"
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "jest",
+    "publish": "npm run build && npm run test && npm publish"
   },
   "repository": {
     "type": "git",
@@ -26,5 +32,10 @@
   "homepage": "https://github.com/AlexanderLyon/Haystack#readme",
   "dependencies": {
     "stemmer": "^1.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.22",
+    "jest": "^26.6.3",
+    "typescript": "^4.1.3"
   }
 }

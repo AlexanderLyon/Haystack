@@ -6,92 +6,77 @@
 
 const stemmer = require('stemmer');
 
-export class Haystack {
-  constructor(...args) {
+interface IOptions {
+  caseSensitive: boolean;
+  flexibility: number;
+  stemming: boolean;
+  exclusions: string[];
+  ignoreStopWords: boolean;
+}
+
+type SearchPool = string[] | object;
+
+class Haystack {
+  private options: IOptions;
+
+  constructor(...args: any[]) {
     // Default options:
     const defaults = {
       caseSensitive: false,
       flexibility: 2,
       stemming: false,
-      exclusions: null,
-      ignoreStopWords: false
+      exclusions: [],
+      ignoreStopWords: false,
     };
 
     // Override defaults with passed in options:
     if (args[0] && typeof args[0] === 'object') {
       this.options = extendDefaults(defaults, args[0]);
-    }
-    else {
+    } else {
       this.options = defaults;
     }
   }
 
-
-
   /**
-   * Returns an array of matches, or null if no matches are found
+   * Returns an array of matches
    * @param {string} query phrase to search for
    * @param {string[]|Object} source data to search
    * @param {number} [limit=1] maximum number of results returned
    * @return {Array} Sorted array of matches
    */
-  search(query, source, limit) {
+  public search(query: string, source: SearchPool, limit: number = 1): string[] {
+    const results: string[] = [];
+    const sourceDataType = getDataType(source);
+
     try {
-      if (typeof query !== 'string') {
+      if (typeof query !== 'string' || !query.trim().length) {
         throw new Error('Invalid search query');
-      }
-      else if ((typeof source === 'undefined') || (typeof source === 'number')) {
+      } else if (sourceDataType !== 'array' && sourceDataType !== 'object') {
         throw new Error('Invalid source type: ' + typeof source);
       }
+    } catch (e) {
+      console.error(e.message);
+      return results;
     }
-    catch (e) {
-      console.error(e);
-      return;
+
+    query = prepareQuery(query, this.options);
+    const tokens = this.tokenize(query);
+
+    /* Search */
+    let searchResults: string[] = [];
+    if (sourceDataType === 'array') {
+      searchResults = searchArray(source, query, tokens, this.options);
+    } else if (sourceDataType === 'object') {
+      searchResults = searchObject(source, query, tokens, this.options);
     }
 
-    limit = (typeof limit !== 'undefined') ? limit : 1;
-    const sourceDataType = getDataType(source);
-    source = (sourceDataType === 'string') ? this.tokenize(source) : source;
-    let results = [];
-    let tokens;
-
-    if (query != '') {
-      query = prepareQuery(query, this.options);
-      tokens = this.tokenize(query);
-
-      /* Search */
-      let searchResults;
-      switch (sourceDataType) {
-        case 'array':
-        case 'string':
-          searchResults = searchArray(source, query, tokens, this.options);
-          break;
-        case 'object':
-          searchResults = searchObject(source, query, tokens, this.options);
-          break;
-      }
-
-      if (searchResults.length > 0) {
-        for (let i=0; i<searchResults.length; i++) {
-          results.push(searchResults[i]);
-        }
-      }
-
-      // Sort and return either the results array, or null:
-      if (results == '') {
-        return null;
-      }
-      else {
-        return sortResults( createUniqueArray(results), query ).slice(0, limit);
-      }
+    if (searchResults.length > 0) {
+      const sorted = sortResults(createUniqueArray(searchResults), query).slice(0, limit);
+      results.push(...sorted);
     }
-    else {
-      // No query present
-      return null;
-    }
+
+    return results;
   }
-
-
 
   /**
    * Splits a string into tokens based on specified delimiter
@@ -99,16 +84,13 @@ export class Haystack {
    * @param {string} delimiter the points where the split should occur
    * @return {Array} array of tokens
    */
-  tokenize(input, delimiter) {
-    delimiter = (typeof delimiter !== 'undefined') ? delimiter : ' ';
+  public tokenize(input: string, delimiter: string = ' '): string[] {
     return input.split(delimiter);
   }
 }
 
-
-
 /** Extends defaults with user options */
-function extendDefaults(defaults, properties) {
+function extendDefaults(defaults: IOptions, properties: object): IOptions {
   for (let property in properties) {
     if (properties.hasOwnProperty(property)) {
       defaults[property] = properties[property];
@@ -117,35 +99,35 @@ function extendDefaults(defaults, properties) {
   return defaults;
 }
 
-
 /**
  * Cleans and formats query based on defined options
  * @param {string} query phrase to search for
  * @param {Object} options user-defined options
  * @return {string} new query
  */
-function prepareQuery(query, options) {
+function prepareQuery(query: string, options: IOptions): string {
   let tokens;
 
   if (options.ignoreStopWords) {
     query = removeStopWords(query);
   }
 
-  if (options.exclusions) {
-    query = query.replace(options.exclusions, '');
+  if (options.exclusions?.length) {
+    options.exclusions.forEach((item) => {
+      query = query.replace(item, '');
+    });
   }
 
   if (options.caseSensitive) {
     query = query.trim();
     tokens = query.split(' ');
-  }
-  else {
+  } else {
     query = query.trim().toLowerCase();
     tokens = query.split(' ');
   }
 
   if (options.stemming) {
-    for (let i=0; i<tokens.length; i++) {
+    for (let i = 0; i < tokens.length; i++) {
       tokens[i] = stemmer(tokens[i]);
     }
     query = tokens.join(' ');
@@ -153,7 +135,6 @@ function prepareQuery(query, options) {
 
   return query;
 }
-
 
 /**
  * Searches an array for token matches
@@ -163,16 +144,16 @@ function prepareQuery(query, options) {
  * @param {Object} options user-defined options
  * @return {Array} results
  */
-function searchArray(source, query, tokens, options) {
+function searchArray(source: string[], query: string, tokens: string[], options: IOptions): string[] {
   let currentResults = [];
 
-  for (let i=0; i<source.length; i++) {
+  for (let i = 0; i < source.length; i++) {
     // Make sure value is a string:
     source[i] = options.caseSensitive ? String(source[i]) : String(source[i]).toLowerCase();
 
     // Test if every token is found:
     let allTokensFound = true;
-    for (let j=0; j<tokens.length; j++) {
+    for (let j = 0; j < tokens.length; j++) {
       if (source[i].indexOf(tokens[j]) === -1) {
         allTokensFound = false;
         break;
@@ -182,8 +163,10 @@ function searchArray(source, query, tokens, options) {
     if (allTokensFound) {
       // Exact match
       currentResults.push(source[i]);
-    }
-    else if ((options.flexibility > 0) && (levenshtein(query.toLowerCase(), source[i].toLowerCase()) <= options.flexibility)) {
+    } else if (
+      options.flexibility > 0 &&
+      levenshtein(query.toLowerCase(), source[i].toLowerCase()) <= options.flexibility
+    ) {
       // Flexibility is set, and this value is within acceptable range
       currentResults.push(source[i]);
     }
@@ -191,7 +174,6 @@ function searchArray(source, query, tokens, options) {
 
   return currentResults;
 }
-
 
 /**
  * Recursively searches an object for token matches
@@ -202,23 +184,26 @@ function searchArray(source, query, tokens, options) {
  * @param {Array} currentResults results saved between recursions
  * @return {Array} results
  */
-function searchObject(obj, query, tokens, options, currentResults) {
-  currentResults = (typeof currentResults !== 'undefined') ? currentResults : [];
-
+function searchObject(
+  obj: object,
+  query: string,
+  tokens: string[],
+  options: IOptions,
+  currentResults: string[] = []
+): string[] {
   for (let key in obj) {
     if (obj.hasOwnProperty(key)) {
-      let value = obj[key];
+      let value: object | string = obj[key];
 
       if (getDataType(value) === 'object') {
         currentResults = searchObject(value, query, tokens, options, currentResults);
-      }
-      else {
+      } else {
         // Make sure value is a string:
         value = options.caseSensitive ? String(value) : String(value).toLowerCase();
 
         // Test if every token is found:
         let allTokensFound = true;
-        for (let i=0; i<tokens.length; i++) {
+        for (let i = 0; i < tokens.length; i++) {
           if (value.indexOf(tokens[i]) === -1) {
             allTokensFound = false;
             break;
@@ -228,8 +213,10 @@ function searchObject(obj, query, tokens, options, currentResults) {
         if (allTokensFound) {
           // Exact match
           currentResults.push(value);
-        }
-        else if ((options.flexibility > 0) && (levenshtein(query.toLowerCase(), value.toLowerCase()) <= options.flexibility)) {
+        } else if (
+          options.flexibility > 0 &&
+          levenshtein(query.toLowerCase(), value.toLowerCase()) <= options.flexibility
+        ) {
           // Flexibility is set, and this value is within acceptable range
           currentResults.push(value);
         }
@@ -240,23 +227,20 @@ function searchObject(obj, query, tokens, options, currentResults) {
   return currentResults;
 }
 
-
 /**
  * Returns numeric Levenshtein distance between two strings
  * @param {string} word1 first word
  * @param {string} word2 second word
  * @return {number} Levenshtein distance
  */
-function levenshtein(word1, word2) {
+function levenshtein(word1: string, word2: string): number | void {
   /* Returns numeric Levenshtein distance between two strings */
   let cost = [];
-  let str1 = word1;
-  let str2 = word2;
-  let n = str1.length;
+  let n = word1.length;
   let m = word1.length;
   let i;
   let j;
-  let minimum = function(a, b, c) {
+  const minimum = (a, b, c) => {
     let min = a;
     if (b < min) {
       min = b;
@@ -282,13 +266,12 @@ function levenshtein(word1, word2) {
     cost[0][j] = j;
   }
   for (i = 1; i <= n; i++) {
-    let x = str1.charAt(i - 1);
+    let x = word1.charAt(i - 1);
     for (j = 1; j <= m; j++) {
-      let y = str2.charAt(j - 1);
+      let y = word2.charAt(j - 1);
       if (x == y) {
         cost[i][j] = cost[i - 1][j - 1];
-      }
-      else {
+      } else {
         cost[i][j] = 1 + minimum(cost[i - 1][j - 1], cost[i][j - 1], cost[i - 1][j]);
       }
     }
@@ -296,17 +279,16 @@ function levenshtein(word1, word2) {
   return cost[n][m];
 }
 
-
 /** Sorts results in ascending order */
-function sortResults(results, query) {
+function sortResults(results: string[], query: string): string[] {
   let swapped;
   do {
     swapped = false;
     for (let i = 0; i < results.length; i++) {
-      if (results[i] && results[i+1] && levenshtein(query, results[i]) > levenshtein(query, results[i+1])) {
+      if (results[i] && results[i + 1] && levenshtein(query, results[i]) > levenshtein(query, results[i + 1])) {
         let temp = results[i];
-        results[i] = results[i+1];
-        results[i+1] = temp;
+        results[i] = results[i + 1];
+        results[i + 1] = temp;
         swapped = true;
       }
     }
@@ -314,62 +296,31 @@ function sortResults(results, query) {
   return results;
 }
 
-
 /** Removes duplicates from an array */
-function createUniqueArray(arr) {
-  let uniqueArray = arr.filter(function(item, pos) {
-    return arr.indexOf(item) == pos;
-  });
-  return uniqueArray;
+function createUniqueArray(arr: any[]) {
+  return arr.filter((item, i) => arr.indexOf(item) === i);
 }
 
-
 /** Returns a more specific data type */
-function getDataType(source) {
+function getDataType(source: any): string {
   if (source) {
-    if (typeof source === 'object' && source.constructor === Array) {
+    if (Array.isArray(source)) {
       return 'array';
-    }
-    else if (typeof source === 'object' && source.constructor === Object) {
+    } else if (typeof source === 'object' && source.constructor === Object) {
       return 'object';
-    }
-    else if (typeof source === 'string' && source.constructor === String) {
+    } else if (typeof source === typeof 'string' && source.constructor === String) {
       return 'string';
     }
   }
-  else {
-    return null;
-  }
+
+  return 'undefined';
 }
 
-
-/** Removes common stop words from the query */
-function removeStopWords(query) {
-  let words = query.split(' ');
-  let newQuery = [];
-
-  // Mark stop word tokens as 'undefined'
-  for (let i=0; i<words.length; i++) {
-    switch (words[i].toLowerCase()) {
-      case 'the':
-      case 'a':
-      case 'to':
-      case 'on':
-      case 'in':
-      case 'is':
-      case 'of':
-      case 'and':
-        words[i] = undefined;
-        break;
-    }
-  }
-
-  // Only move elements that are defined to 'newQuery' array
-  for (let i=0; i<words.length; i++) {
-    if (words[i] != undefined) {
-      newQuery.push(words[i]);
-    }
-  }
-
-  return newQuery.join(' ');
+/** Filters out common stop words from the query */
+function removeStopWords(query: string): string {
+  const stopWords: string[] = ['the', 'a', 'to', 'on', 'in', 'is', 'of', 'and'];
+  const words: string[] = query.split(' ').filter((word) => !stopWords.includes(word));
+  return words.join(' ');
 }
+
+module.exports = Haystack;
