@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "publish": "npm run build && npm run test && npm publish"
   },
   "repository": {
     "type": "git",
