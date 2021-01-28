@@ -14,6 +14,24 @@ describe('Array search', () => {
     expect(result).toEqual(['january']);
   });
 
+  test('lower flexibility yields more strict search results', () => {
+    const moreStrictHaystack = new Haystack({
+      flexibility: 0,
+    });
+
+    const result = moreStrictHaystack.search('jun', ['June', 'July', 'August'], 2);
+    expect(result).toEqual(['june']);
+  });
+
+  test('higher flexibility yields less strict search results', () => {
+    const lessStrictHaystack = new Haystack({
+      flexibility: 2,
+    });
+
+    const result = lessStrictHaystack.search('jun', ['June', 'July', 'August'], 2);
+    expect(result).toEqual(['june', 'july']);
+  });
+
   test('respects case-sensitivity', () => {
     const caseSensitiveHaystack = new Haystack({
       caseSensitive: true,
