@@ -1,6 +1,6 @@
 {
   "name": "haystack-search",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "Search for approximate matches to a query",
   "main": "dist/haystack.js",
   "files": [
